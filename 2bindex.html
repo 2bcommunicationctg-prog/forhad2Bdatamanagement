@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>2B Communication | Final System</title>
+    <title>2B Communication | Ultimate Fast</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
@@ -11,221 +11,197 @@
     <link href="https://fonts.cdnfonts.com/css2?family=SolaimanLipi&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'SolaimanLipi', sans-serif; background: #f1f5f9; }
-        .ui-panel { max-width: 950px; margin: 20px auto; padding: 25px; background: white; border-radius: 20px; border-top: 8px solid #4f46e5; }
+        .ui-panel { max-width: 950px; margin: 10px auto; padding: 20px; background: white; border-radius: 20px; border-top: 6px solid #4f46e5; }
         @media print {
             .no-print { display: none !important; }
-            body { background: white !important; margin: 0 !important; }
+            body { background: white !important; }
             #print-zone { display: block !important; }
             .page { page-break-after: always; position: relative; width: 10in; height: 7in; margin: 0 auto; overflow: hidden; }
             .bg-template { position: absolute; top: 0; left: 0; width: 10in; height: 7in; z-index: 1; }
             .plate-info { position: absolute; color: black; z-index: 10; left: 315px; width: 450px; text-align: left; font-size: 27pt !important; line-height: 1.1; }
-            .p-owner { top: 235px; } .p-parent { top: 285px; } .p-hld { top: 335px; font-weight: bold; } 
+            .p-owner { top: 235px; } .p-parent { top: 285px; } 
+            .p-hld { top: 335px; font-weight: bold; color: black !important; } 
             .p-ward { top: 385px; } .p-road { top: 435px; line-height: 1.2; } 
             .p-qr { position: absolute; z-index: 20; left: 678px; top: 220px; width: 185px; }
         }
         #print-zone { display: none; }
+        .data-card { transition: all 0.2s; border: 1px solid #e2e8f0; }
+        .data-card:hover { border-color: #6366f1; background: #f8fafc; }
     </style>
 </head>
 <body onload="initApp()">
 
-<div id="main-content" class="hidden no-print ui-panel shadow-2xl">
-    <div class="flex justify-between items-start mb-6 border-b pb-4">
-        <div>
-            <h2 class="text-2xl font-bold text-indigo-600">2B Communication Online</h2>
-            <p id="user-display" class="text-[10px] text-slate-500 font-bold uppercase"></p>
-        </div>
-        <button onclick="logout()" class="text-red-500 px-3 py-1 rounded-full text-xs font-bold border border-red-100">লগআউট</button>
-    </div>
-
-    <div id="super-admin-panel" class="hidden mb-8 space-y-4">
-        <div class="bg-slate-900 text-white p-6 rounded-3xl shadow-2xl border-b-8 border-indigo-600">
-            <div class="mb-6">
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-indigo-400 font-bold">📊 লাইভ রিপোর্ট</h3>
-                    <div class="bg-indigo-600 px-4 py-1 rounded-full text-sm font-bold">মোট: <span id="total-data-count">0</span></div>
-                </div>
-                <div id="user-stats-grid" class="grid grid-cols-2 md:grid-cols-4 gap-3"></div>
-            </div>
-            <div class="bg-slate-800 p-4 rounded-2xl mb-6 border border-slate-700">
-                <p class="text-xs font-bold text-indigo-300 mb-2 uppercase">প্লেট টেমপ্লেট:</p>
-                <input type="file" id="plate-file-input" accept="image/*" onchange="handlePlateUpload()" class="text-xs">
-            </div>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6">
-                <input type="text" id="new-username" placeholder="নতুন ইউজার আইডি" class="p-2 rounded bg-slate-800 border border-slate-700 text-sm text-white">
-                <input type="text" id="new-password" placeholder="পাসওয়ার্ড" class="p-2 rounded bg-slate-800 border border-slate-700 text-sm text-white">
-                <button onclick="addUser()" class="bg-indigo-600 py-2 rounded font-bold text-sm">ইউজার তৈরি</button>
-            </div>
-            <div id="user-list-admin" class="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-48 overflow-y-auto pr-2"></div>
+<div id="main-content" class="hidden no-print ui-panel shadow-xl">
+    <div class="flex justify-between items-center mb-6 border-b pb-4">
+        <h2 class="text-2xl font-black text-indigo-600 tracking-tight">2B Communication</h2>
+        <div class="flex items-center gap-3">
+            <span id="user-display" class="text-xs bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full font-bold"></span>
+            <button onclick="logout()" class="text-red-500 text-xs font-bold border border-red-200 px-3 py-1 rounded-full hover:bg-red-50">লগআউট</button>
         </div>
     </div>
 
-    <div class="bg-slate-50 p-6 rounded-2xl mb-8 border">
+    <div id="super-admin-panel" class="hidden mb-6 bg-slate-900 p-5 rounded-3xl text-white shadow-2xl">
+        <div class="flex justify-between items-center mb-4">
+            <p class="text-indigo-400 font-bold text-sm uppercase">সিস্টেম স্ট্যাটাস</p>
+            <div class="flex gap-2">
+                <button onclick="clearAllData()" class="bg-red-600 hover:bg-red-700 px-3 py-1 rounded-lg text-[10px] font-bold">সব মুছুন</button>
+                <div class="bg-indigo-600 px-3 py-1 rounded-lg text-[10px] font-bold">মোট ডাটা: <span id="total-count">0</span></div>
+            </div>
+        </div>
+        <div id="user-stats-grid" class="grid grid-cols-2 md:grid-cols-5 gap-3"></div>
+    </div>
+
+    <div class="bg-white p-6 rounded-2xl mb-8 border-2 border-slate-100 shadow-sm">
         <input type="hidden" id="edit-id" value="">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <input type="text" id="owner" placeholder="মালিকের নাম" class="p-3 border rounded-xl outline-none">
-            <input type="text" id="parent" placeholder="পিতা/স্বামী" class="p-3 border rounded-xl outline-none">
-            <input type="text" id="hld" placeholder="হোল্ডিং নং" class="p-3 border rounded-xl outline-none">
-            <input type="text" id="ward" placeholder="ওয়ার্ড নং" class="p-3 border rounded-xl outline-none">
-            <textarea id="road" placeholder="মহল্লা/গ্রাম/রাস্তা" class="md:col-span-2 p-3 border rounded-xl h-16 outline-none"></textarea>
+            <input type="text" id="owner" placeholder="মালিকের নাম" class="p-3 bg-slate-50 border rounded-xl outline-none focus:ring-2 ring-indigo-400">
+            <input type="text" id="parent" placeholder="পিতা/স্বামী" class="p-3 bg-slate-50 border rounded-xl outline-none focus:ring-2 ring-indigo-400">
+            <input type="text" id="hld" placeholder="হোল্ডিং নং" class="p-3 bg-slate-50 border rounded-xl outline-none focus:ring-2 ring-indigo-400">
+            <input type="text" id="ward" placeholder="ওয়ার্ড নং" class="p-3 bg-slate-50 border rounded-xl outline-none focus:ring-2 ring-indigo-400">
+            <input type="text" id="road" placeholder="মহল্লা/গ্রাম/রাস্তা" class="md:col-span-2 p-3 bg-slate-50 border rounded-xl outline-none focus:ring-2 ring-indigo-400">
         </div>
-        <button id="save-btn" onclick="saveData()" class="w-full mt-4 bg-indigo-600 text-white py-4 rounded-xl font-bold shadow-xl">অনলাইনে সেভ করুন</button>
+        <button id="save-btn" onclick="saveData()" class="w-full mt-4 bg-indigo-600 text-white py-4 rounded-xl font-bold text-lg shadow-lg active:scale-95 transition-all">অনলাইনে সেভ করুন</button>
     </div>
 
-    <div id="admin-action-buttons" class="hidden grid grid-cols-2 gap-4 mb-10">
-        <button onclick="downloadBulkID()" class="bg-emerald-500 text-white py-3 rounded-xl font-bold text-sm">📂 ZIP ডাউনলোড</button>
-        <button onclick="window.print()" class="bg-blue-600 text-white py-3 rounded-xl font-bold text-sm">🖨️ প্রিন্ট আউট</button>
+    <div id="admin-action-buttons" class="hidden grid grid-cols-2 gap-4 mb-8">
+        <button id="zip-btn" onclick="downloadBulkID()" class="bg-emerald-500 text-white py-4 rounded-2xl font-bold text-sm shadow-lg hover:bg-emerald-600">📂 সব SVG ডাউনলোড (ZIP)</button>
+        <button onclick="startPrinting()" class="bg-blue-600 text-white py-4 rounded-2xl font-bold text-sm shadow-lg hover:bg-blue-700">🖨️ প্রিন্ট কপি তৈরি করুন</button>
     </div>
 
-    <div id="data-list-container" class="space-y-3"></div>
+    <div class="relative mb-4">
+        <input type="text" id="search-box" onkeyup="renderList()" placeholder="নাম বা হোল্ডিং দিয়ে সার্চ করুন..." class="w-full p-4 pl-12 bg-white border rounded-2xl shadow-sm outline-none focus:border-indigo-500">
+        <span class="absolute left-4 top-4 text-slate-400">🔍</span>
+    </div>
+
+    <div id="data-list-container" class="space-y-3 max-h-[500px] overflow-y-auto pr-2"></div>
 </div>
 
 <div id="print-zone"></div>
 
 <script>
-    const firebaseConfig = {
-        databaseURL: "https://b-system-73a7f-default-rtdb.firebaseio.com/"
-    };
+    const firebaseConfig = { databaseURL: "https://b-system-73a7f-default-rtdb.firebaseio.com/" };
     firebase.initializeApp(firebaseConfig);
     const database = firebase.database();
-
-    const defaultUsers = { "admin": { pass: "forhad786", status: "active" } };
-    let users = {}; let db = []; let currentUser = sessionStorage.getItem('logged_2b_user');
+    let db = []; let currentUser = sessionStorage.getItem('logged_2b_user');
     let plateTemplate = localStorage.getItem('2b_plate_v3') || "";
 
     function initApp() {
         database.ref('users').on('value', (snap) => {
-            users = snap.val() || defaultUsers;
-            if(!snap.val()) database.ref('users').set(defaultUsers);
-            checkAccess();
-        });
-        database.ref('entries').on('value', (snap) => {
-            const data = snap.val();
-            db = data ? Object.keys(data).map(id => ({...data[id], id})) : [];
-            renderList(); renderStats(); preparePrint();
+            const users = snap.val() || { "admin": { pass: "forhad786" } };
+            if (currentUser && users[currentUser]) {
+                document.getElementById('main-content').classList.remove('hidden');
+                document.getElementById('user-display').innerText = `ইউজার: ${currentUser}`;
+                if(currentUser === 'admin') {
+                    document.getElementById('super-admin-panel').classList.remove('hidden');
+                    document.getElementById('admin-action-buttons').classList.remove('hidden');
+                }
+                loadData();
+            } else {
+                const id = prompt("ID:"); const pass = prompt("Pass:");
+                if (users[id] && users[id].pass === pass) { sessionStorage.setItem('logged_2b_user', id); location.reload(); }
+            }
         });
     }
 
-    function checkAccess() {
-        if (currentUser && users[currentUser]) {
-            if (users[currentUser].status === 'blocked') { alert("Blocked!"); logout(); return; }
-            document.getElementById('main-content').classList.remove('hidden');
-            document.getElementById('user-display').innerText = `User: ${currentUser}`;
-            if(currentUser === 'admin') {
-                document.getElementById('super-admin-panel').classList.remove('hidden');
-                document.getElementById('admin-action-buttons').classList.remove('hidden');
-                renderUserManagement();
-            }
-        } else {
-            const id = prompt("ID:"); const pass = prompt("Pass:");
-            if (users[id] && users[id].pass === pass) { sessionStorage.setItem('logged_2b_user', id); location.reload(); }
-            else if(id) { alert("Wrong!"); }
+    function loadData() {
+        database.ref('entries').on('value', (snap) => {
+            const data = snap.val();
+            db = data ? Object.keys(data).map(id => ({...data[id], id})) : [];
+            document.getElementById('total-count').innerText = db.length;
+            renderList();
+            renderStats();
+        });
+    }
+
+    function renderList() {
+        const container = document.getElementById('data-list-container');
+        const query = document.getElementById('search-box').value.toLowerCase();
+        let list = (currentUser === 'admin') ? db : db.filter(d => d.user === currentUser);
+        
+        if(query) list = list.filter(d => d.owner.toLowerCase().includes(query) || d.hld.includes(query));
+        
+        container.innerHTML = list.slice().reverse().map(d => `
+            <div class="data-card bg-white p-4 rounded-2xl flex justify-between items-center shadow-sm">
+                <div>
+                    <h4 class="font-bold text-slate-800">${d.owner} <span class="text-indigo-500 font-mono text-xs ml-2">#${d.hld}</span></h4>
+                    <p class="text-[10px] text-slate-400 mt-1 uppercase font-semibold">${d.user} | ${d.date}</p>
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="editEntry('${d.id}')" class="bg-amber-50 text-amber-600 px-4 py-2 rounded-xl text-xs font-bold hover:bg-amber-100">এডিট</button>
+                    ${currentUser==='admin' ? `<button onclick="deleteEntry('${d.id}')" class="text-red-400 hover:bg-red-50 p-2 rounded-xl">🗑️</button>` : ''}
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function renderStats() {
+        const grid = document.getElementById('user-stats-grid');
+        if(!grid) return;
+        const stats = {};
+        db.forEach(d => stats[d.user] = (stats[d.user] || 0) + 1);
+        grid.innerHTML = Object.keys(stats).map(u => `
+            <div class="bg-slate-800 p-3 rounded-2xl border border-slate-700">
+                <p class="text-[9px] text-indigo-300 font-bold truncate">${u}</p>
+                <p class="text-lg font-black">${stats[u]}</p>
+            </div>
+        `).join('');
+    }
+
+    function startPrinting() {
+        const zone = document.getElementById('print-zone');
+        zone.innerHTML = "<div style='text-align:center; padding:100px;'><h3>প্রিন্ট ডাটা প্রসেস হচ্ছে... দয়া করে অপেক্ষা করুন।</h3></div>";
+        setTimeout(() => {
+            zone.innerHTML = db.map(d => {
+                const qrText = `মালিক: ${d.owner}\nপিতা/স্বামী: ${d.parent}\nহোল্ডিং নং: ${d.hld}\nওয়ার্ড নং: ${d.ward}\nরাস্তা: ${d.road}`;
+                const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(qrText)}`;
+                return `<div class="page"><img src="${plateTemplate}" class="bg-template"><div class="plate-info p-owner">${d.owner}</div><div class="plate-info p-parent">${d.parent}</div><div class="plate-info p-hld">${d.hld}</div><div class="plate-info p-ward">${d.ward}</div><div class="plate-info p-road">${d.road}</div><img src="${qrUrl}" class="p-qr"></div>`;
+            }).join('');
+            window.print();
+        }, 1000);
+    }
+
+    async function downloadBulkID() {
+        const btn = document.getElementById('zip-btn');
+        btn.disabled = true; btn.innerText = "ফাইল তৈরি হচ্ছে...";
+        const zip = new JSZip();
+        for (let i = 0; i < db.length; i++) {
+            const d = db[i];
+            const qrText = `মালিক: ${d.owner}\nপিতা: ${d.parent}\nহোল্ডিং: ${d.hld}\nওয়ার্ড: ${d.ward}\nরাস্তা: ${d.road}`;
+            const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(qrText)}`;
+            try {
+                const res = await fetch(qrUrl);
+                const blob = await res.blob();
+                const b64 = await new Promise(r => {const rd = new FileReader(); rd.onloadend = () => r(rd.result); rd.readAsDataURL(blob);});
+                const svg = `<?xml version="1.0" encoding="UTF-8"?><svg width="85.5mm" height="54mm" viewBox="0 0 85.5 54" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><rect width="85.5" height="54" fill="white"/><text x="25" y="21.5" font-family="Arial" font-size="3.2" font-weight="bold" fill="black">${d.owner}</text><text x="25" y="26.2" font-family="Arial" font-size="3" fill="black">${d.parent}</text><text x="25" y="31.0" font-family="Arial" font-size="3.2" font-weight="bold" fill="white">${d.hld}</text><text x="25" y="36.0" font-family="Arial" font-size="3" fill="black">${d.ward}</text><text x="25" y="41.3" font-family="Arial" font-size="2.8" fill="black">${d.road}</text><image xlink:href="${b64}" x="60" y="29" height="22" width="22"/></svg>`;
+                zip.file(`ID_${d.hld}_${i+1}.svg`, svg);
+                btn.innerText = `প্রসেসিং: ${i+1}/${db.length}`;
+            } catch(e) {}
         }
+        zip.generateAsync({type: "blob"}).then(c => {
+            const a = document.createElement("a"); a.href = URL.createObjectURL(c); a.download = `2B_Bulk_All.zip`; a.click();
+            btn.disabled = false; btn.innerText = "📂 সব SVG ডাউনলোড (ZIP)";
+        });
     }
 
     function saveData() {
         const owner = document.getElementById('owner').value.trim();
         const hld = document.getElementById('hld').value.trim();
         const editId = document.getElementById('edit-id').value;
-        if(!owner || !hld) return alert("Fill Name & Holding");
-
-        const entry = {
-            owner, parent: document.getElementById('parent').value,
-            hld, ward: document.getElementById('ward').value,
-            road: document.getElementById('road').value,
-            user: currentUser, date: new Date().toLocaleString('bn-BD')
-        };
-
-        if(editId) database.ref('entries/' + editId).update(entry);
-        else database.ref('entries').push(entry);
-        
+        if(!owner || !hld) return alert("মালিক এবং হোল্ডিং নম্বর দিন");
+        const entry = { owner, parent: document.getElementById('parent').value, hld, ward: document.getElementById('ward').value, road: document.getElementById('road').value, user: currentUser, date: new Date().toLocaleDateString('bn-BD') };
+        if(editId) database.ref('entries/' + editId).update(entry); else database.ref('entries').push(entry);
         ['owner','parent','hld','ward','road','edit-id'].forEach(i => document.getElementById(i).value="");
         document.getElementById('save-btn').innerText = "অনলাইনে সেভ করুন";
-        alert("Saved Online!");
     }
 
-    function addUser() {
-        const u = document.getElementById('new-username').value.trim();
-        const p = document.getElementById('new-password').value.trim();
-        if(u && p) {
-            database.ref('users/' + u).set({ pass: p, status: "active" });
-            document.getElementById('new-username').value = ""; document.getElementById('new-password').value = "";
-        }
-    }
-
-    function renderList() {
-        const container = document.getElementById('data-list-container'); container.innerHTML = "";
-        let list = (currentUser==='admin') ? db : db.filter(d => d.user === currentUser);
-        list.slice().reverse().forEach(d => {
-            container.innerHTML += `<div class="bg-white p-4 rounded-xl border flex justify-between items-center shadow-sm">
-                <div><h4 class="font-bold">${d.owner} <span class="text-[10px] text-slate-400">#${d.hld}</span></h4><p class="text-[10px] text-slate-500 uppercase">${d.user} | ${d.date}</p></div>
-                <div class="flex gap-2">
-                    <button onclick="editEntry('${d.id}')" class="bg-amber-50 text-amber-600 px-3 py-1 rounded text-xs font-bold">এডিট</button>
-                    ${currentUser==='admin' ? `<button onclick="deleteEntry('${d.id}')" class="text-red-400 text-xs">মুছুন</button>` : ''}
-                </div></div>`;
-        });
-    }
-
+    function deleteEntry(id) { if(confirm("মুছবেন?")) database.ref('entries/' + id).remove(); }
+    function clearAllData() { if(confirm("সব ডাটা মুছে যাবে! আপনি কি নিশ্চিত?")) database.ref('entries').remove(); }
     function editEntry(id) {
         const d = db.find(item => item.id === id);
         ['owner','parent','hld','ward','road'].forEach(i => document.getElementById(i).value=d[i]);
         document.getElementById('edit-id').value=id; document.getElementById('save-btn').innerText="আপডেট করুন";
         window.scrollTo({top:0, behavior:'smooth'});
     }
-
-    function deleteEntry(id) { if(confirm("মুছবেন?")) database.ref('entries/' + id).remove(); }
-    function renderUserManagement() {
-        const list = document.getElementById('user-list-admin'); list.innerHTML = "";
-        Object.keys(users).forEach(u => {
-            if(u === 'admin') return;
-            const b = users[u].status === 'blocked';
-            list.innerHTML += `<div class="bg-slate-800 p-3 rounded-xl flex justify-between items-center text-[11px] border border-slate-700">
-                <div><p class="text-indigo-300 font-bold">${u}</p><p class="text-slate-400 text-[9px]">Pass: ${users[u].pass}</p></div>
-                <div class="flex gap-2">
-                    <button onclick="database.ref('users/${u}/status').set('${b?'active':'blocked'}')" class="px-3 py-1 rounded font-bold ${b ? 'bg-green-600' : 'bg-red-500'}">${b ? 'আনব্লক' : 'ব্লক'}</button>
-                    <button onclick="if(confirm('মুছবেন?')) database.ref('users/${u}').remove()" class="text-slate-500">মুছুন</button>
-                </div></div>`;
-        });
-    }
-
-    function renderStats() {
-        const statsGrid = document.getElementById('user-stats-grid');
-        document.getElementById('total-data-count').innerText = db.length;
-        statsGrid.innerHTML = ""; const counts = {};
-        db.forEach(d => counts[d.user] = (counts[d.user] || 0) + 1);
-        Object.keys(users).forEach(u => {
-            statsGrid.innerHTML += `<div class="bg-slate-800 p-2 rounded-lg border border-slate-700"><p class="text-[10px] text-indigo-300 truncate">${u}</p><p class="text-lg font-bold text-white">${counts[u] || 0}</p></div>`;
-        });
-    }
-
-    function handlePlateUpload() {
-        const file = document.getElementById('plate-file-input').files[0];
-        const reader = new FileReader();
-        reader.onloadend = () => { localStorage.setItem('2b_plate_v3', reader.result); location.reload(); };
-        reader.readAsDataURL(file);
-    }
-
-    function preparePrint() {
-        const zone = document.getElementById('print-zone'); zone.innerHTML = "";
-        db.forEach(d => {
-            const qrData = `মালিক: ${d.owner}\nপিতা: ${d.parent}\nহোল্ডিং: ${d.hld}\nওয়ার্ড: ${d.ward}\nরাস্তা: ${d.road}`;
-            const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(qrData)}`;
-            zone.innerHTML += `<div class="page"><img src="${plateTemplate}" class="bg-template"><div class="plate-info p-owner"><span>${d.owner}</span></div><div class="plate-info p-parent"><span>${d.parent}</span></div><div class="plate-info p-hld"><span>${d.hld}</span></div><div class="plate-info p-ward"><span>${d.ward}</span></div><div class="plate-info p-road"><span>${d.road}</span></div><img src="${qrUrl}" class="p-qr"></div>`;
-        });
-    }
-
-    async function downloadBulkID() {
-        const zip = new JSZip();
-        for (const d of db) {
-            const qrData = `মালিক: ${d.owner}\nপিতা: ${d.parent}\nহোল্ডিং: ${d.hld}\nওয়ার্ড: ${d.ward}\nরাস্তা: ${d.road}`;
-            const qrRes = await fetch(`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(qrData)}`); 
-            const blob = await qrRes.blob();
-            const b64 = await new Promise(r => {const rd = new FileReader(); rd.onloadend = () => r(rd.result); rd.readAsDataURL(blob);});
-            const svg = `<?xml version="1.0" encoding="UTF-8"?><svg width="85.5mm" height="54mm" viewBox="0 0 85.5 54" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><rect width="85.5" height="54" fill="white"/><text x="25" y="21.5" font-family="Arial" font-size="3.2" font-weight="bold">${d.owner}</text><text x="25" y="26.2" font-family="Arial" font-size="3">${d.parent}</text><text x="25" y="31.0" font-family="Arial" font-size="3.2" font-weight="bold">${d.hld}</text><text x="25" y="36.0" font-family="Arial" font-size="3">${d.ward}</text><text x="25" y="41.3" font-family="Arial" font-size="2.8">${d.road}</text><image xlink:href="${b64}" x="60" y="29" height="22" width="22"/></svg>`;
-            zip.file(`ID_${d.hld}.svg`, svg);
-        }
-        zip.generateAsync({type: "blob"}).then(c => { const a = document.createElement("a"); a.href = URL.createObjectURL(c); a.download = "2B_IDs.zip"; a.click(); });
-    }
-
     function logout() { sessionStorage.removeItem('logged_2b_user'); location.reload(); }
 </script>
 </body>
