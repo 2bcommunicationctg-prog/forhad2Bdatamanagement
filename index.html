@@ -2,24 +2,25 @@
 <html lang="bn">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>2B Communication | Full Admin Master</title>
+    <title>2B Communication | Admin Control Master</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <link href="https://fonts.cdnfonts.com/css2?family=SolaimanLipi&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'SolaimanLipi', sans-serif; background: #f1f5f9; }
-        .ui-panel { max-width: 950px; margin: 10px auto; padding: 20px; background: white; border-radius: 24px; border-top: 8px solid #4f46e5; }
+        body { font-family: 'SolaimanLipi', sans-serif; background: #0f172a; color: white; margin: 0; }
+        .ui-card { background: #1e293b; border-radius: 12px; border: 1px solid #334155; }
+        input, textarea { background: #334155 !important; color: white !important; border: 1px solid #475569 !important; padding: 10px; border-radius: 8px; width: 100%; outline: none; font-size: 14px; }
+        
         @media print {
             .no-print { display: none !important; }
-            #print-zone { display: block !important; }
-            .page { page-break-after: always; position: relative; width: 10in; height: 7in; margin: 0 auto; overflow: hidden; }
+            #print-zone { display: block !important; background: white !important; }
+            .page { page-break-after: always; position: relative; width: 10in; height: 7in; margin: 0; overflow: hidden; background: white !important; }
             .bg-template { position: absolute; top: 0; left: 0; width: 10in; height: 7in; z-index: 1; }
-            .plate-info { position: absolute; color: black; z-index: 10; left: 315px; width: 450px; text-align: left; font-size: 27pt !important; line-height: 1.1; }
-            .p-owner { top: 235px; } .p-parent { top: 285px; } .p-hld { top: 335px; font-weight: bold; } 
-            .p-ward { top: 385px; } .p-road { top: 435px; line-height: 1.1; } 
+            .plate-info { position: absolute; z-index: 10; left: 315px; width: 360px; text-align: left; font-size: 27pt; color: black; font-weight: bold; white-space: nowrap; display: flex; align-items: center; }
+            .auto-fit { display: inline-block; transform-origin: left center; }
+            .p-owner { top: 235px; } .p-parent { top: 285px; } .p-hld { top: 335px; } .p-ward { top: 385px; } .p-road { top: 435px; }
             .p-qr { position: absolute; z-index: 20; left: 678px; top: 220px; width: 185px; }
         }
         #print-zone { display: none; }
@@ -27,69 +28,70 @@
 </head>
 <body onload="initApp()">
 
-<div id="main-content" class="hidden no-print ui-panel shadow-2xl">
-    <div class="flex justify-between items-center mb-6 border-b pb-4">
-        <div>
-            <h2 class="text-2xl font-black text-indigo-600">2B Communication</h2>
-            <p id="user-display" class="text-[10px] text-slate-500 font-bold uppercase"></p>
+<div id="main-content" class="hidden no-print max-w-5xl mx-auto p-4">
+    <div class="flex justify-between items-center mb-6 border-b border-slate-800 pb-4">
+        <h1 class="text-xl font-bold text-indigo-400">2B Communication</h1>
+        <div class="flex gap-4 items-center">
+            <span id="user-display" class="text-[10px] bg-slate-800 px-3 py-1 rounded text-slate-400 uppercase"></span>
+            <button onclick="logout()" class="text-red-400 text-xs font-bold">লগআউট</button>
         </div>
-        <button onclick="logout()" class="text-red-500 text-xs font-bold border border-red-100 px-4 py-1.5 rounded-full hover:bg-red-50">লগআউট</button>
     </div>
 
-    <div id="super-admin-panel" class="hidden space-y-4 mb-8">
-        <div class="bg-slate-900 text-white p-6 rounded-3xl shadow-xl border-b-8 border-indigo-600">
-            <div class="flex justify-between items-center mb-6">
-                <h3 class="text-indigo-400 font-bold tracking-widest uppercase text-xs">📊 কন্ট্রোল প্যানেল</h3>
-                <div class="flex gap-2">
-                    <button onclick="clearAllData()" class="bg-red-600 px-4 py-1 rounded-full text-[10px] font-bold">সব মুছুন</button>
-                    <div class="bg-indigo-600 px-4 py-1 rounded-full text-[10px] font-bold">মোট ডাটা: <span id="total-count">0</span></div>
-                </div>
+    <div id="admin-panel" class="hidden space-y-4 mb-6">
+        <div class="ui-card p-4 border-l-4 border-indigo-500">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-sm font-bold text-indigo-300">এডমিন কন্ট্রোল প্যানেল</h2>
+                <div class="bg-indigo-600 px-4 py-1 rounded-full text-[10px] font-bold">মোট ডাটা: <span id="total-count-display">0</span> টি</div>
             </div>
             
-            <div id="user-stats-grid" class="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6"></div>
+            <div id="user-stats" class="grid grid-cols-1 md:grid-cols-2 gap-2 mb-4"></div>
             
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div class="bg-slate-800 p-5 rounded-2xl border border-slate-700">
-                    <p class="text-[11px] font-bold text-indigo-300 mb-3 uppercase">নতুন ইউজার যোগ করুন:</p>
-                    <div class="flex flex-col gap-2 mb-4">
-                        <input type="text" id="new-user-id" placeholder="ইউজার আইডি" class="bg-slate-700 p-2.5 rounded-lg text-xs border border-slate-600 outline-none text-white focus:border-indigo-400">
-                        <input type="text" id="new-user-pass" placeholder="পাসওয়ার্ড" class="bg-slate-700 p-2.5 rounded-lg text-xs border border-slate-600 outline-none text-white focus:border-indigo-400">
-                        <button onclick="addNewUser()" class="bg-indigo-500 hover:bg-indigo-600 text-white py-2.5 rounded-lg text-xs font-bold shadow-md">ইউজার সেভ করুন</button>
-                    </div>
-                    <p class="text-[11px] font-bold text-indigo-300 mb-2 uppercase border-t border-slate-700 pt-3">ইউজার লিস্ট:</p>
-                    <div id="user-management-list" class="space-y-2 max-h-32 overflow-y-auto pr-1"></div>
-                </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-2 mb-4">
+                <input type="text" id="new-user" placeholder="ইউজার আইডি">
+                <input type="text" id="new-pass" placeholder="পাসওয়ার্ড">
+                <button onclick="createUser()" class="bg-indigo-600 rounded-lg text-xs font-bold py-2">ইউজার সেট/আপডেট</button>
+            </div>
 
-                <div class="bg-slate-800 p-5 rounded-2xl border border-slate-700">
-                    <p class="text-[11px] font-bold text-indigo-300 mb-3 uppercase">প্লেট টেমপ্লেট পরিবর্তন:</p>
-                    <div class="flex flex-col gap-3">
-                        <input type="file" id="plate-input" accept="image/*" class="text-xs text-slate-400">
-                        <button onclick="handlePlateUpload()" class="bg-emerald-600 text-white py-2.5 rounded-xl text-xs font-bold shadow-md">টেমপ্লেট আপলোড করুন</button>
-                    </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 border-t border-slate-700 pt-4">
+                <div class="text-center">
+                    <p class="text-[9px] text-slate-500 mb-1 font-bold italic uppercase">ID Card (id.png)</p>
+                    <input type="file" onchange="loadImg(this, 'id')" class="text-[10px]">
+                </div>
+                <div class="text-center">
+                    <p class="text-[9px] text-slate-500 mb-1 font-bold italic uppercase">Plate (plate.png)</p>
+                    <input type="file" onchange="loadImg(this, 'plate')" class="text-[10px]">
                 </div>
             </div>
+
+            <button onclick="deleteAllData()" class="w-full mt-6 bg-red-900/40 text-red-400 border border-red-800 py-2 rounded-lg text-xs font-bold">সব ডাটা এক ক্লিকে মুছুন</button>
         </div>
     </div>
 
-    <div class="bg-slate-50 p-6 rounded-2xl mb-8 border border-slate-200">
-        <input type="hidden" id="edit-id" value="">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <input type="text" id="owner" placeholder="মালিকের নাম" class="p-3 border rounded-xl outline-none focus:ring-2 ring-indigo-400">
-            <input type="text" id="parent" placeholder="পিতা/স্বামী" class="p-3 border rounded-xl outline-none focus:ring-2 ring-indigo-400">
-            <input type="text" id="hld" placeholder="হোল্ডিং নং" class="p-3 border rounded-xl outline-none focus:ring-2 ring-indigo-400">
-            <input type="text" id="ward" placeholder="ওয়ার্ড নং" class="p-3 border rounded-xl outline-none focus:ring-2 ring-indigo-400">
-            <textarea id="road" placeholder="মহল্লা/গ্রাম/রাস্তা" class="md:col-span-2 p-3 border rounded-xl h-16 outline-none focus:ring-2 ring-indigo-400"></textarea>
+    <div class="ui-card p-6 mb-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <input type="hidden" id="edit-id">
+            <input type="text" id="owner" placeholder="মালিকের নাম">
+            <input type="text" id="parent" placeholder="পিতা/স্বামীর নাম">
+            <input type="text" id="hld" placeholder="হোল্ডিং নং">
+            <input type="text" id="ward" placeholder="ওয়ার্ড নং">
+            <textarea id="road" placeholder="ঠিকানা" class="md:col-span-2 h-16"></textarea>
         </div>
-        <button id="save-btn" onclick="saveData()" class="w-full mt-4 bg-indigo-600 text-white py-4 rounded-xl font-bold shadow-lg transition-all">অনলাইনে সেভ করুন</button>
+        <div class="flex gap-2 mt-4">
+            <button id="save-btn" onclick="saveData()" class="flex-1 bg-indigo-600 py-3 rounded-lg font-bold">ডাটা সেভ করুন</button>
+            <button id="cancel-btn" onclick="resetForm()" class="hidden bg-slate-700 px-6 rounded-lg font-bold">বাতিল</button>
+        </div>
     </div>
 
-    <div id="admin-action-buttons" class="hidden grid grid-cols-2 gap-4 mb-8">
-        <button id="zip-btn" onclick="downloadBulkZip()" class="bg-slate-800 text-white py-4 rounded-2xl font-bold text-sm shadow-lg hover:bg-black transition-all">📂 সব SVG ডাউনলোড (ZIP)</button>
-        <button onclick="startPrinting()" class="bg-blue-600 text-white py-4 rounded-2xl font-bold text-sm shadow-lg hover:bg-blue-700 transition-all">🖨️ প্রিন্ট কপি তৈরি করুন</button>
+    <div id="admin-btns" class="hidden grid grid-cols-2 gap-4 mb-6">
+        <button onclick="buildZip()" class="bg-slate-700 py-3 rounded-lg font-bold border border-slate-600">📂 SVG জিপ ডাউনলোড</button>
+        <button onclick="window.print()" class="bg-blue-600 py-3 rounded-lg font-bold shadow-lg">🖨️ প্রিন্ট ভিউ</button>
     </div>
 
-    <input type="text" id="search-box" onkeyup="renderList()" placeholder="হোল্ডিং বা নাম দিয়ে খুঁজুন..." class="w-full p-4 border rounded-2xl bg-white mb-4 shadow-sm outline-none focus:border-indigo-500">
-    <div id="data-list-container" class="space-y-3 max-h-[400px] overflow-y-auto pr-2"></div>
+    <div class="text-xs text-slate-400 mb-2 flex justify-between">
+        <span id="list-title">এন্ট্রিকৃত ডাটা লিস্ট:</span>
+        <span id="personal-count" class="text-indigo-400 font-bold"></span>
+    </div>
+    <div id="list" class="space-y-1 max-h-[400px] overflow-y-auto pr-2"></div>
 </div>
 
 <div id="print-zone"></div>
@@ -98,135 +100,212 @@
     const firebaseConfig = { databaseURL: "https://b-system-73a7f-default-rtdb.firebaseio.com/" };
     firebase.initializeApp(firebaseConfig);
     const database = firebase.database();
-    let db = []; let users = {}; let currentUser = sessionStorage.getItem('logged_2b_user');
-    let plateTemplate = localStorage.getItem('2b_plate_v3') || "";
+    let entries = []; let usersData = {}; let currentUser = sessionStorage.getItem('user_2b');
+    let idImg = ""; let plateImg = "";
+
+    function loadImg(input, type) {
+        if (input.files && input.files[0]) {
+            const rd = new FileReader();
+            rd.onload = (e) => { 
+                if(type === 'id') idImg = e.target.result; 
+                else { plateImg = e.target.result; renderPrint(); }
+            };
+            rd.readAsDataURL(input.files[0]);
+        }
+    }
 
     function initApp() {
-        database.ref('users').on('value', (snap) => {
-            users = snap.val() || { "admin": { pass: "forhad786" } };
-            if (currentUser && users[currentUser]) {
+        database.ref('users').on('value', (s) => {
+            usersData = s.val() || { "admin": { pass: "forhad786" } };
+            if (currentUser && usersData[currentUser]) {
+                if(usersData[currentUser].status === 'blocked') {
+                    alert("আপনার আইডি ব্লক করা হয়েছে!");
+                    logout();
+                    return;
+                }
                 document.getElementById('main-content').classList.remove('hidden');
                 document.getElementById('user-display').innerText = `ইউজার: ${currentUser}`;
                 if(currentUser === 'admin') {
-                    document.getElementById('super-admin-panel').classList.remove('hidden');
-                    document.getElementById('admin-action-buttons').classList.remove('hidden');
+                    document.getElementById('admin-panel').classList.remove('hidden');
+                    document.getElementById('admin-btns').classList.remove('hidden');
                 }
-                loadData();
+                syncData();
             } else {
-                const id = prompt("ID:"); const pass = prompt("Pass:");
-                if (users[id] && users[id].pass === pass) { sessionStorage.setItem('logged_2b_user', id); location.reload(); }
+                const id = prompt("User ID:"); const p = prompt("Password:");
+                if(id && usersData[id] && usersData[id].pass === p) {
+                    if(usersData[id].status === 'blocked') {
+                        alert("এই আইডিটি বর্তমানে ব্লকড!");
+                    } else {
+                        sessionStorage.setItem('user_2b', id); location.reload();
+                    }
+                } else { alert("ভুল তথ্য!"); location.reload(); }
             }
         });
     }
 
-    function loadData() {
-        database.ref('entries').on('value', (snap) => {
-            const val = snap.val();
-            db = val ? Object.keys(val).map(id => ({...val[id], id})) : [];
-            document.getElementById('total-count').innerText = db.length;
-            renderList(); renderStats(); renderUserManagement();
-        });
-    }
-
-    // QR কোড ডেটা তৈরির লজিক (সব তথ্যসহ)
-    function generateQRText(d) {
-        return `মালিক: ${d.owner}\nপিতা/স্বামী: ${d.parent}\nহোল্ডিং: ${d.hld}\nওয়ার্ড: ${d.ward}\nঠিকানা: ${d.road}`;
-    }
-
-    function addNewUser() {
-        const id = document.getElementById('new-user-id').value.trim();
-        const pass = document.getElementById('new-user-pass').value.trim();
-        if(!id || !pass) return alert("আইডি এবং পাসওয়ার্ড দিন");
-        database.ref('users/' + id).set({ pass: pass }).then(() => {
-            alert("ইউজার সেভ হয়েছে");
-            document.getElementById('new-user-id').value = ""; document.getElementById('new-user-pass').value = "";
-        });
-    }
-
-    function handlePlateUpload() {
-        const file = document.getElementById('plate-input').files[0];
-        if(!file) return alert("ছবি সিলেক্ট করুন");
-        const reader = new FileReader();
-        reader.onloadend = () => { localStorage.setItem('2b_plate_v3', reader.result); alert("টেমপ্লেট সেভ হয়েছে"); location.reload(); };
-        reader.readAsDataURL(file);
-    }
-
-    async function downloadBulkZip() {
-        const btn = document.getElementById('zip-btn'); btn.disabled = true; btn.innerText = "অপেক্ষা করুন...";
-        const zip = new JSZip();
-        for (let i = 0; i < db.length; i++) {
-            const d = db[i];
-            const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(generateQRText(d))}`;
-            try {
-                const res = await fetch(qrUrl); const blob = await res.blob();
-                const b64 = await new Promise(r => {const rd = new FileReader(); rd.onloadend = () => r(rd.result); rd.readAsDataURL(blob);});
-                const svg = `<?xml version="1.0" encoding="UTF-8"?><svg width="85.5mm" height="54mm" viewBox="0 0 85.5 54" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><rect width="85.5" height="54" fill="white"/><text x="25" y="21.5" font-family="Arial" font-size="3.2" font-weight="bold" fill="black">${d.owner}</text><text x="25" y="26.2" font-family="Arial" font-size="3" fill="black">${d.parent}</text><text x="25" y="31.0" font-family="Arial" font-size="3.2" font-weight="bold" fill="white">${d.hld}</text><text x="25" y="36.0" font-family="Arial" font-size="3" fill="black">${d.ward}</text><text x="25" y="41.3" font-family="Arial" font-size="2.8" fill="black">${d.road}</text><image xlink:href="${b64}" x="60" y="29" height="22" width="22"/></svg>`;
-                zip.file(`ID_${d.hld.replace(/\s/g, '_')}.svg`, svg);
-                btn.innerText = `প্রসেসিং: ${i+1}/${db.length}`;
-            } catch(e) {}
+    function createUser() {
+        const u = document.getElementById('new-user').value.toLowerCase().trim();
+        const p = document.getElementById('new-pass').value.trim();
+        if(u && p) {
+            database.ref('users/' + u).update({ pass: p, status: 'active' });
+            alert("ইউজার তথ্য আপডেট হয়েছে!");
+            document.getElementById('new-user').value = ""; document.getElementById('new-pass').value = "";
         }
-        zip.generateAsync({type: "blob"}).then(c => {
-            const a = document.createElement("a"); a.href = URL.createObjectURL(c); a.download = "2B_IDs_Fixed.zip"; a.click();
-            btn.disabled = false; btn.innerText = "📂 সব SVG ডাউনলোড (ZIP)";
+    }
+
+    function toggleUserBlock(u) {
+        if(u === 'admin') return alert("এডমিনকে ব্লক করা সম্ভব নয়!");
+        const newStatus = usersData[u].status === 'blocked' ? 'active' : 'blocked';
+        database.ref('users/' + u).update({ status: newStatus });
+    }
+
+    function deleteUser(u) {
+        if(u === 'admin') return alert("এডমিনকে ডিলিট করা সম্ভব নয়!");
+        if(confirm(`আপনি কি নিশ্চিতভাবে ${u} কে ডিলিট করতে চান?`)) {
+            database.ref('users/' + u).remove();
+        }
+    }
+
+    function syncData() {
+        database.ref('entries').on('value', (s) => {
+            const val = s.val();
+            entries = val ? Object.keys(val).map(id => ({...val[id], id})) : [];
+            renderStats(); renderList(); renderPrint();
         });
-    }
-
-    function startPrinting() {
-        const zone = document.getElementById('print-zone');
-        zone.innerHTML = "<h2 style='text-align:center; padding:50px;'>প্রিন্ট কপি তৈরি হচ্ছে...</h2>";
-        setTimeout(() => {
-            zone.innerHTML = db.map(d => {
-                const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(generateQRText(d))}`;
-                return `<div class="page"><img src="${plateTemplate}" class="bg-template"><div class="plate-info p-owner">${d.owner}</div><div class="plate-info p-parent">${d.parent}</div><div class="plate-info p-hld">${d.hld}</div><div class="plate-info p-ward">${d.ward}</div><div class="plate-info p-road">${d.road}</div><img src="${qrUrl}" class="p-qr"></div>`;
-            }).join('');
-            window.print();
-        }, 1000);
-    }
-
-    // আগের বাকি সব ফাংশন (saveData, editEntry, etc.) অপরিবর্তিত রাখা হয়েছে
-    function saveData() {
-        const owner = document.getElementById('owner').value.trim();
-        const hld = document.getElementById('hld').value.trim();
-        const editId = document.getElementById('edit-id').value;
-        if(!owner || !hld) return alert("মালিক এবং হোল্ডিং দিন");
-        const entry = { owner, parent: document.getElementById('parent').value, hld, ward: document.getElementById('ward').value, road: document.getElementById('road').value, user: currentUser, date: new Date().toLocaleDateString('bn-BD') };
-        if(editId) database.ref('entries/' + editId).update(entry); else database.ref('entries').push(entry);
-        ['owner','parent','hld','ward','road','edit-id'].forEach(i => document.getElementById(i).value="");
-        document.getElementById('save-btn').innerText = "অনলাইনে সেভ করুন";
-    }
-
-    function renderUserManagement() {
-        const listDiv = document.getElementById('user-management-list');
-        listDiv.innerHTML = "";
-        Object.keys(users).forEach(u => {
-            if(u === 'admin') return;
-            listDiv.innerHTML += `<div class="flex justify-between items-center bg-slate-700 p-2 rounded-lg text-[10px]"><span><b class="text-indigo-300">${u}</b> (${users[u].pass})</span><button onclick="if(confirm('মুছবেন?')) database.ref('users/${u}').remove()" class="text-red-400 font-bold ml-2">মুছুন</button></div>`;
-        });
-    }
-
-    function renderList() {
-        const container = document.getElementById('data-list-container');
-        const q = document.getElementById('search-box').value.toLowerCase();
-        let list = (currentUser === 'admin') ? db : db.filter(d => d.user === currentUser);
-        if(q) list = list.filter(d => d.owner.toLowerCase().includes(q) || d.hld.includes(q));
-        container.innerHTML = list.slice().reverse().map(d => `<div class="bg-white p-4 rounded-2xl border flex justify-between items-center shadow-sm"><div><h4 class="font-bold text-slate-800 text-sm">${d.owner} <span class="text-indigo-500 font-mono text-xs ml-1">#${d.hld}</span></h4><p class="text-[9px] text-slate-400 uppercase mt-1">${d.user} | ${d.date}</p></div><div class="flex gap-2"><button onclick="editEntry('${d.id}')" class="bg-amber-50 text-amber-600 px-3 py-1.5 rounded-xl text-[10px] font-bold">এডিট</button>${currentUser==='admin' ? `<button onclick="deleteEntry('${d.id}')" class="text-red-400 p-2">🗑️</button>` : ''}</div></div>`).join('');
     }
 
     function renderStats() {
-        const grid = document.getElementById('user-stats-grid');
-        const counts = {}; db.forEach(d => counts[d.user] = (counts[d.user] || 0) + 1);
-        grid.innerHTML = Object.keys(counts).map(u => `<div class="bg-slate-800 p-2 rounded-xl border border-slate-700 text-center"><p class="text-[8px] text-indigo-300 truncate font-bold uppercase">${u}</p><p class="text-lg font-black">${counts[u]}</p></div>`).join('');
+        const s = {}; entries.forEach(e => s[e.user] = (s[e.user] || 0) + 1);
+        document.getElementById('total-count-display').innerText = entries.length;
+        
+        let html = "";
+        Object.keys(usersData).forEach(u => {
+            const count = s[u] || 0;
+            const isBlocked = usersData[u].status === 'blocked';
+            html += `
+            <div class="bg-slate-800 p-3 rounded-lg border ${isBlocked ? 'border-red-900' : 'border-slate-700'} flex justify-between items-center">
+                <div>
+                    <p class="text-[10px] ${isBlocked ? 'text-red-400' : 'text-slate-400'} font-bold uppercase">${u} ${isBlocked ? '(BLOCKED)' : ''}</p>
+                    <p class="text-lg font-black text-indigo-400">${count} <span class="text-[9px] text-slate-500">টি ডাটা</span></p>
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="toggleUserBlock('${u}')" class="text-[10px] ${isBlocked ? 'bg-green-900/40 text-green-400' : 'bg-orange-900/40 text-orange-400'} px-2 py-1 rounded border border-current">${isBlocked ? 'আনব্লক' : 'ব্লক'}</button>
+                    <button onclick="deleteUser('${u}')" class="text-[10px] bg-red-900/40 text-red-400 px-2 py-1 rounded border border-red-800">মুছুন</button>
+                </div>
+            </div>`;
+        });
+        if(currentUser === 'admin') document.getElementById('user-stats').innerHTML = html;
+        
+        const myCount = entries.filter(e => e.user === currentUser).length;
+        document.getElementById('personal-count').innerText = `আপনার এন্ট্রি: ${myCount} টি`;
     }
 
-    function deleteEntry(id) { if(confirm("মুছবেন?")) database.ref('entries/' + id).remove(); }
-    function clearAllData() { if(confirm("সব ডাটা মুছে যাবে! নিশ্চিত?")) database.ref('entries').remove(); }
-    function editEntry(id) {
-        const d = db.find(i => i.id === id);
-        ['owner','parent','hld','ward','road'].forEach(i => document.getElementById(i).value = d[i]);
-        document.getElementById('edit-id').value = id; document.getElementById('save-btn').innerText = "আপডেট করুন";
-        window.scrollTo({top:0, behavior:'smooth'});
+    function saveData() {
+        const data = {
+            owner: document.getElementById('owner').value,
+            parent: document.getElementById('parent').value,
+            hld: document.getElementById('hld').value,
+            ward: document.getElementById('ward').value,
+            road: document.getElementById('road').value,
+            user: currentUser
+        };
+        const editId = document.getElementById('edit-id').value;
+        if(!data.owner || !data.hld) return alert("তথ্য দিন");
+        if(editId) { database.ref('entries/' + editId).update(data); resetForm(); }
+        else { database.ref('entries').push(data); resetForm(); }
     }
-    function logout() { sessionStorage.removeItem('logged_2b_user'); location.reload(); }
+
+    function editData(id) {
+        const item = entries.find(e => e.id === id);
+        document.getElementById('edit-id').value = id;
+        document.getElementById('owner').value = item.owner;
+        document.getElementById('parent').value = item.parent;
+        document.getElementById('hld').value = item.hld;
+        document.getElementById('ward').value = item.ward;
+        document.getElementById('road').value = item.road;
+        document.getElementById('save-btn').innerText = "আপডেট করুন";
+        document.getElementById('cancel-btn').classList.remove('hidden');
+        window.scrollTo(0,0);
+    }
+
+    function resetForm() {
+        document.getElementById('edit-id').value = "";
+        ['owner','parent','hld','ward','road'].forEach(i => document.getElementById(i).value = "");
+        document.getElementById('save-btn').innerText = "ডাটা সেভ করুন";
+        document.getElementById('cancel-btn').classList.add('hidden');
+    }
+
+    function deleteAllData() {
+        if(confirm("সব ডাটা ডিলিট হবে। আপনি কি নিশ্চিত?")) { database.ref('entries').remove(); }
+    }
+
+    function renderList() {
+        const list = (currentUser === 'admin') ? entries : entries.filter(e => e.user === currentUser);
+        document.getElementById('list').innerHTML = list.slice().reverse().map(e => `
+            <div class="ui-card p-3 flex justify-between items-center text-xs mb-1">
+                <div class="flex-1">
+                    <p class="font-bold text-indigo-300">${e.owner}</p>
+                    <p class="text-[10px] text-slate-500 italic">হোল্ডিং: ${e.hld} ${currentUser === 'admin' ? '| ইউজার: ' + e.user : ''}</p>
+                </div>
+                <div class="flex gap-4">
+                    <button onclick="editData('${e.id}')" class="text-blue-400 font-bold">ইডিট</button>
+                    ${currentUser === 'admin' ? `<button onclick="database.ref('entries/${e.id}').remove()" class="text-red-500">মুছুন</button>` : ''}
+                </div>
+            </div>`).join('');
+    }
+
+    function getSvgText(text, x, y, maxWidth, fontSize, isBold=false, color="black") {
+        let estimatedWidth = text.length * (fontSize * 0.52);
+        let scaleX = estimatedWidth > maxWidth ? (maxWidth / estimatedWidth) : 1;
+        return `<text x="${x}" y="${y}" font-family="Arial" font-size="${fontSize}" ${isBold ? 'font-weight="bold"' : ''} fill="${color}" style="transform: scale(${scaleX}, 1); transform-origin: ${x}px ${y}px;">${text}</text>`;
+    }
+
+    async function buildZip() {
+        if(!idImg) return alert("ID কার্ড টেমপ্লেট দিন");
+        const zip = new JSZip();
+        for(let d of entries) {
+            const txt = `মালিক: ${d.owner}\nপিতা: ${d.parent}\nহোল্ডিং: ${d.hld}\nওয়ার্ড: ${d.ward}\nঠিকানা: ${d.road}`;
+            const qrRes = await fetch(`https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(txt)}`);
+            const b = await qrRes.blob();
+            const qrB64 = await new Promise(ok => { const r = new FileReader(); r.onloadend = () => ok(r.result); r.readAsDataURL(b); });
+            const svg = `<?xml version="1.0" encoding="UTF-8"?><svg width="85.5mm" height="54mm" viewBox="0 0 85.5 54" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+                <image xlink:href="${idImg}" x="0" y="0" width="85.5" height="54" preserveAspectRatio="none"/>
+                ${getSvgText(d.owner, 25.5, 20.5, 36, 3.2, true)}
+                ${getSvgText(d.parent, 25.5, 25.5, 36, 3.2)}
+                ${getSvgText(d.hld, 25.5, 30.5, 36, 3.2, true, "white")}
+                ${getSvgText(d.ward, 25.5, 35.5, 36, 3.2)}
+                ${getSvgText(d.road, 25.5, 40.5, 36, 2.8)}
+                <image xlink:href="${qrB64}" x="63.5" y="28" height="19" width="19"/>
+            </svg>`;
+            zip.file(`${d.hld.replace(/\//g,'_')}.svg`, svg);
+        }
+        zip.generateAsync({type:"blob"}).then(c => { const a = document.createElement('a'); a.href = URL.createObjectURL(c); a.download = "2B_IDs.zip"; a.click(); });
+    }
+
+    function renderPrint() {
+        if(!plateImg) return;
+        document.getElementById('print-zone').innerHTML = entries.map(e => {
+            const txt = `মালিক: ${e.owner}\nপিতা: ${e.parent}\nহোল্ডিং: ${e.hld}\nওয়ার্ড: ${e.ward}\nঠিকানা: ${e.road}`;
+            return `<div class="page">
+                <img src="${plateImg}" class="bg-template">
+                <div class="plate-info p-owner"><span class="auto-fit">${e.owner}</span></div>
+                <div class="plate-info p-parent"><span class="auto-fit">${e.parent}</span></div>
+                <div class="plate-info p-hld"><span class="auto-fit">${e.hld}</span></div>
+                <div class="plate-info p-ward"><span class="auto-fit">${e.ward}</span></div>
+                <div class="plate-info p-road"><span class="auto-fit">${e.road}</span></div>
+                <img src="https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(txt)}" class="p-qr">
+            </div>`;
+        }).join('');
+        setTimeout(() => {
+            document.querySelectorAll('.plate-info').forEach(box => {
+                const span = box.querySelector('.auto-fit');
+                const scale = Math.min(1, box.offsetWidth / span.offsetWidth);
+                span.style.transform = `scale(${scale}, 1)`;
+            });
+        }, 500);
+    }
+
+    function logout() { sessionStorage.removeItem('user_2b'); location.reload(); }
 </script>
 </body>
 </html>
