@@ -2,7 +2,7 @@
 <html lang="bn">
 <head>
     <meta charset="UTF-8">
-    <title>2B Communication | Admin Control Master</title>
+    <title>2B Communication | Final Fixed Master</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
@@ -10,17 +10,21 @@
     <link href="https://fonts.cdnfonts.com/css2?family=SolaimanLipi&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'SolaimanLipi', sans-serif; background: #0f172a; color: white; margin: 0; }
-        .ui-card { background: #1e293b; border-radius: 12px; border: 1px solid #334155; }
-        input, textarea { background: #334155 !important; color: white !important; border: 1px solid #475569 !important; padding: 10px; border-radius: 8px; width: 100%; outline: none; font-size: 14px; }
-        
+        .ui-card { background: #1e293b; border-radius: 15px; border: 1px solid #334155; }
+        input, textarea { background: #334155 !important; color: white !important; border: 1px solid #475569 !important; padding: 10px; border-radius: 8px; width: 100%; outline: none; }
         @media print {
             .no-print { display: none !important; }
             #print-zone { display: block !important; background: white !important; }
             .page { page-break-after: always; position: relative; width: 10in; height: 7in; margin: 0; overflow: hidden; background: white !important; }
             .bg-template { position: absolute; top: 0; left: 0; width: 10in; height: 7in; z-index: 1; }
-            .plate-info { position: absolute; z-index: 10; left: 315px; width: 360px; text-align: left; font-size: 27pt; color: black; font-weight: bold; white-space: nowrap; display: flex; align-items: center; }
+            .plate-info { 
+                position: absolute; z-index: 10; left: 315px; width: 360px; 
+                text-align: left; font-size: 27pt; color: black; font-weight: bold; 
+                white-space: nowrap; display: flex; align-items: center;
+            }
             .auto-fit { display: inline-block; transform-origin: left center; }
-            .p-owner { top: 235px; } .p-parent { top: 285px; } .p-hld { top: 335px; } .p-ward { top: 385px; } .p-road { top: 435px; }
+            .p-owner { top: 235px; } .p-parent { top: 285px; } .p-hld { top: 335px; }
+            .p-ward { top: 385px; } .p-road { top: 435px; }
             .p-qr { position: absolute; z-index: 20; left: 678px; top: 220px; width: 185px; }
         }
         #print-zone { display: none; }
@@ -32,7 +36,7 @@
     <div class="flex justify-between items-center mb-6 border-b border-slate-800 pb-4">
         <h1 class="text-xl font-bold text-indigo-400">2B Communication</h1>
         <div class="flex gap-4 items-center">
-            <span id="user-display" class="text-[10px] bg-slate-800 px-3 py-1 rounded text-slate-400 uppercase"></span>
+            <span id="user-display" class="text-[10px] bg-slate-800 px-3 py-1 rounded text-slate-400"></span>
             <button onclick="logout()" class="text-red-400 text-xs font-bold">লগআউট</button>
         </div>
     </div>
@@ -40,30 +44,30 @@
     <div id="admin-panel" class="hidden space-y-4 mb-6">
         <div class="ui-card p-4 border-l-4 border-indigo-500">
             <div class="flex justify-between items-center mb-4">
-                <h2 class="text-sm font-bold text-indigo-300">এডমিন কন্ট্রোল প্যানেল</h2>
-                <div class="bg-indigo-600 px-4 py-1 rounded-full text-[10px] font-bold">মোট ডাটা: <span id="total-count-display">0</span> টি</div>
+                <h2 class="text-sm font-bold text-indigo-300 uppercase">ইউজার ও ডাটা কন্ট্রোল</h2>
+                <div class="bg-indigo-600 px-3 py-1 rounded text-[10px] font-bold">মোট ডাটা: <span id="total-count">0</span></div>
             </div>
             
             <div id="user-stats" class="grid grid-cols-1 md:grid-cols-2 gap-2 mb-4"></div>
             
             <div class="grid grid-cols-1 md:grid-cols-3 gap-2 mb-4">
                 <input type="text" id="new-user" placeholder="ইউজার আইডি">
-                <input type="text" id="new-pass" placeholder="পাসওয়ার্ড">
+                <input type="text" id="new-pass" placeholder="পাসওয়ার্ড">
                 <button onclick="createUser()" class="bg-indigo-600 rounded-lg text-xs font-bold py-2">ইউজার সেট/আপডেট</button>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 border-t border-slate-700 pt-4">
-                <div class="text-center">
-                    <p class="text-[9px] text-slate-500 mb-1 font-bold italic uppercase">ID Card (id.png)</p>
-                    <input type="file" onchange="loadImg(this, 'id')" class="text-[10px]">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-slate-700 pt-4 mb-4">
+                <div class="bg-slate-800/50 p-2 rounded border border-dashed border-slate-600 text-center">
+                    <p class="text-[9px] mb-1 text-slate-400 font-bold italic">ID Card (id.png)</p>
+                    <input type="file" onchange="loadImg(this, 'id')" class="text-[10px] w-full">
                 </div>
-                <div class="text-center">
-                    <p class="text-[9px] text-slate-500 mb-1 font-bold italic uppercase">Plate (plate.png)</p>
-                    <input type="file" onchange="loadImg(this, 'plate')" class="text-[10px]">
+                <div class="bg-slate-800/50 p-2 rounded border border-dashed border-slate-600 text-center">
+                    <p class="text-[9px] mb-1 text-slate-400 font-bold italic">Plate (plate.png)</p>
+                    <input type="file" onchange="loadImg(this, 'plate')" class="text-[10px] w-full">
                 </div>
             </div>
 
-            <button onclick="deleteAllData()" class="w-full mt-6 bg-red-900/40 text-red-400 border border-red-800 py-2 rounded-lg text-xs font-bold">সব ডাটা এক ক্লিকে মুছুন</button>
+            <button onclick="deleteAllData()" class="w-full bg-red-900/30 text-red-400 border border-red-800 py-1 text-[10px] font-bold rounded">সব ডাটা একবারে মুছুন</button>
         </div>
     </div>
 
@@ -84,12 +88,12 @@
 
     <div id="admin-btns" class="hidden grid grid-cols-2 gap-4 mb-6">
         <button onclick="buildZip()" class="bg-slate-700 py-3 rounded-lg font-bold border border-slate-600">📂 SVG জিপ ডাউনলোড</button>
-        <button onclick="window.print()" class="bg-blue-600 py-3 rounded-lg font-bold shadow-lg">🖨️ প্রিন্ট ভিউ</button>
+        <button onclick="window.print()" class="bg-blue-600 py-3 rounded-lg font-bold shadow-lg">🖨️ প্রিন্ট ভিউ (10x7)</button>
     </div>
 
-    <div class="text-xs text-slate-400 mb-2 flex justify-between">
-        <span id="list-title">এন্ট্রিকৃত ডাটা লিস্ট:</span>
-        <span id="personal-count" class="text-indigo-400 font-bold"></span>
+    <div class="flex justify-between items-center mb-2 px-1">
+        <span class="text-xs text-slate-400">এন্ট্রিকৃত তালিকা:</span>
+        <span id="personal-count" class="text-xs text-indigo-400 font-bold"></span>
     </div>
     <div id="list" class="space-y-1 max-h-[400px] overflow-y-auto pr-2"></div>
 </div>
@@ -118,52 +122,22 @@
         database.ref('users').on('value', (s) => {
             usersData = s.val() || { "admin": { pass: "forhad786" } };
             if (currentUser && usersData[currentUser]) {
-                if(usersData[currentUser].status === 'blocked') {
-                    alert("আপনার আইডি ব্লক করা হয়েছে!");
-                    logout();
-                    return;
-                }
+                if(usersData[currentUser].status === 'blocked') { alert("আপনার আইডি ব্লক করা হয়েছে!"); logout(); return; }
                 document.getElementById('main-content').classList.remove('hidden');
-                document.getElementById('user-display').innerText = `ইউজার: ${currentUser}`;
+                document.getElementById('user-display').innerText = `ইউজার: ${currentUser.toUpperCase()}`;
                 if(currentUser === 'admin') {
                     document.getElementById('admin-panel').classList.remove('hidden');
                     document.getElementById('admin-btns').classList.remove('hidden');
                 }
                 syncData();
             } else {
-                const id = prompt("User ID:"); const p = prompt("Password:");
+                const id = prompt("ID:").toLowerCase().trim(); const p = prompt("Pass:");
                 if(id && usersData[id] && usersData[id].pass === p) {
-                    if(usersData[id].status === 'blocked') {
-                        alert("এই আইডিটি বর্তমানে ব্লকড!");
-                    } else {
-                        sessionStorage.setItem('user_2b', id); location.reload();
-                    }
+                    if(usersData[id].status === 'blocked') alert("ব্লকড আইডি!");
+                    else { sessionStorage.setItem('user_2b', id); location.reload(); }
                 } else { alert("ভুল তথ্য!"); location.reload(); }
             }
         });
-    }
-
-    function createUser() {
-        const u = document.getElementById('new-user').value.toLowerCase().trim();
-        const p = document.getElementById('new-pass').value.trim();
-        if(u && p) {
-            database.ref('users/' + u).update({ pass: p, status: 'active' });
-            alert("ইউজার তথ্য আপডেট হয়েছে!");
-            document.getElementById('new-user').value = ""; document.getElementById('new-pass').value = "";
-        }
-    }
-
-    function toggleUserBlock(u) {
-        if(u === 'admin') return alert("এডমিনকে ব্লক করা সম্ভব নয়!");
-        const newStatus = usersData[u].status === 'blocked' ? 'active' : 'blocked';
-        database.ref('users/' + u).update({ status: newStatus });
-    }
-
-    function deleteUser(u) {
-        if(u === 'admin') return alert("এডমিনকে ডিলিট করা সম্ভব নয়!");
-        if(confirm(`আপনি কি নিশ্চিতভাবে ${u} কে ডিলিট করতে চান?`)) {
-            database.ref('users/' + u).remove();
-        }
     }
 
     function syncData() {
@@ -175,54 +149,47 @@
     }
 
     function renderStats() {
-        const s = {}; entries.forEach(e => s[e.user] = (s[e.user] || 0) + 1);
-        document.getElementById('total-count-display').innerText = entries.length;
-        
-        let html = "";
-        Object.keys(usersData).forEach(u => {
-            const count = s[u] || 0;
-            const isBlocked = usersData[u].status === 'blocked';
-            html += `
-            <div class="bg-slate-800 p-3 rounded-lg border ${isBlocked ? 'border-red-900' : 'border-slate-700'} flex justify-between items-center">
-                <div>
-                    <p class="text-[10px] ${isBlocked ? 'text-red-400' : 'text-slate-400'} font-bold uppercase">${u} ${isBlocked ? '(BLOCKED)' : ''}</p>
-                    <p class="text-lg font-black text-indigo-400">${count} <span class="text-[9px] text-slate-500">টি ডাটা</span></p>
-                </div>
-                <div class="flex gap-2">
-                    <button onclick="toggleUserBlock('${u}')" class="text-[10px] ${isBlocked ? 'bg-green-900/40 text-green-400' : 'bg-orange-900/40 text-orange-400'} px-2 py-1 rounded border border-current">${isBlocked ? 'আনব্লক' : 'ব্লক'}</button>
-                    <button onclick="deleteUser('${u}')" class="text-[10px] bg-red-900/40 text-red-400 px-2 py-1 rounded border border-red-800">মুছুন</button>
-                </div>
-            </div>`;
-        });
-        if(currentUser === 'admin') document.getElementById('user-stats').innerHTML = html;
-        
+        const counts = {}; entries.forEach(e => counts[e.user] = (counts[e.user] || 0) + 1);
+        if(currentUser === 'admin') {
+            document.getElementById('total-count').innerText = entries.length;
+            let html = "";
+            Object.keys(usersData).forEach(u => {
+                const isB = usersData[u].status === 'blocked';
+                html += `<div class="bg-slate-800 p-2 rounded flex justify-between items-center border ${isB?'border-red-900':'border-slate-700'}">
+                    <span class="text-[10px] font-bold uppercase ${isB?'text-red-500':'text-indigo-300'}">${u} (${counts[u]||0})</span>
+                    <div class="flex gap-2">
+                        <button onclick="updateStatus('${u}', '${isB?'active':'blocked'}')" class="text-[9px] px-2 py-1 bg-slate-700 rounded">${isB?'আনব্লক':'ব্লক'}</button>
+                        <button onclick="delUser('${u}')" class="text-[9px] text-red-500 font-bold px-1">×</button>
+                    </div>
+                </div>`;
+            });
+            document.getElementById('user-stats').innerHTML = html;
+        }
         const myCount = entries.filter(e => e.user === currentUser).length;
         document.getElementById('personal-count').innerText = `আপনার এন্ট্রি: ${myCount} টি`;
     }
 
+    function createUser() {
+        const u = document.getElementById('new-user').value.toLowerCase().trim();
+        const p = document.getElementById('new-pass').value.trim();
+        if(u && p) { database.ref('users/'+u).update({pass:p, status:'active'}); alert("ইউজার আপডেট হয়েছে!"); }
+    }
+    function updateStatus(u, s) { if(u!=='admin') database.ref('users/'+u).update({status:s}); }
+    function delUser(u) { if(u!=='admin' && confirm("ইউজারটি কি ডিলিট করবেন?")) database.ref('users/'+u).remove(); }
+    function deleteAllData() { if(confirm("সব ডাটা কি চিরতরে মুছবেন?")) database.ref('entries').remove(); }
+
     function saveData() {
-        const data = {
-            owner: document.getElementById('owner').value,
-            parent: document.getElementById('parent').value,
-            hld: document.getElementById('hld').value,
-            ward: document.getElementById('ward').value,
-            road: document.getElementById('road').value,
-            user: currentUser
-        };
-        const editId = document.getElementById('edit-id').value;
+        const data = { owner: document.getElementById('owner').value, parent: document.getElementById('parent').value, hld: document.getElementById('hld').value, ward: document.getElementById('ward').value, road: document.getElementById('road').value, user: currentUser };
         if(!data.owner || !data.hld) return alert("তথ্য দিন");
-        if(editId) { database.ref('entries/' + editId).update(data); resetForm(); }
-        else { database.ref('entries').push(data); resetForm(); }
+        const eid = document.getElementById('edit-id').value;
+        if(eid) database.ref('entries/'+eid).update(data); else database.ref('entries').push(data);
+        resetForm();
     }
 
     function editData(id) {
-        const item = entries.find(e => e.id === id);
+        const d = entries.find(e => e.id === id);
         document.getElementById('edit-id').value = id;
-        document.getElementById('owner').value = item.owner;
-        document.getElementById('parent').value = item.parent;
-        document.getElementById('hld').value = item.hld;
-        document.getElementById('ward').value = item.ward;
-        document.getElementById('road').value = item.road;
+        ['owner','parent','hld','ward','road'].forEach(k => document.getElementById(k).value = d[k]);
         document.getElementById('save-btn').innerText = "আপডেট করুন";
         document.getElementById('cancel-btn').classList.remove('hidden');
         window.scrollTo(0,0);
@@ -230,13 +197,9 @@
 
     function resetForm() {
         document.getElementById('edit-id').value = "";
-        ['owner','parent','hld','ward','road'].forEach(i => document.getElementById(i).value = "");
+        ['owner','parent','hld','ward','road'].forEach(k => document.getElementById(k).value = "");
         document.getElementById('save-btn').innerText = "ডাটা সেভ করুন";
         document.getElementById('cancel-btn').classList.add('hidden');
-    }
-
-    function deleteAllData() {
-        if(confirm("সব ডাটা ডিলিট হবে। আপনি কি নিশ্চিত?")) { database.ref('entries').remove(); }
     }
 
     function renderList() {
@@ -245,29 +208,29 @@
             <div class="ui-card p-3 flex justify-between items-center text-xs mb-1">
                 <div class="flex-1">
                     <p class="font-bold text-indigo-300">${e.owner}</p>
-                    <p class="text-[10px] text-slate-500 italic">হোল্ডিং: ${e.hld} ${currentUser === 'admin' ? '| ইউজার: ' + e.user : ''}</p>
+                    <p class="text-[10px] text-slate-500 italic">হোল্ডিং: ${e.hld} ${currentUser==='admin'?'| '+e.user:''}</p>
                 </div>
                 <div class="flex gap-4">
-                    <button onclick="editData('${e.id}')" class="text-blue-400 font-bold">ইডিট</button>
-                    ${currentUser === 'admin' ? `<button onclick="database.ref('entries/${e.id}').remove()" class="text-red-500">মুছুন</button>` : ''}
+                    <button onclick="editData('${e.id}')" class="text-blue-400 font-bold uppercase">ইডিট</button>
+                    ${currentUser==='admin'?'<button onclick="database.ref(\'entries/\'+ \''+e.id+'\').remove()" class="text-red-500 font-bold">×</button>':''}
                 </div>
             </div>`).join('');
     }
 
+    // SVG ও প্রিন্ট লজিক (বাম এলাইনমেন্ট ফিক্সড)
     function getSvgText(text, x, y, maxWidth, fontSize, isBold=false, color="black") {
-        let estimatedWidth = text.length * (fontSize * 0.52);
-        let scaleX = estimatedWidth > maxWidth ? (maxWidth / estimatedWidth) : 1;
-        return `<text x="${x}" y="${y}" font-family="Arial" font-size="${fontSize}" ${isBold ? 'font-weight="bold"' : ''} fill="${color}" style="transform: scale(${scaleX}, 1); transform-origin: ${x}px ${y}px;">${text}</text>`;
+        let estW = text.length * (fontSize * 0.52);
+        let sX = estW > maxWidth ? (maxWidth / estW) : 1;
+        return `<text x="${x}" y="${y}" font-family="Arial" font-size="${fontSize}" ${isBold?'font-weight="bold"':''} fill="${color}" style="transform: scale(${sX}, 1); transform-origin: ${x}px ${y}px;">${text}</text>`;
     }
 
     async function buildZip() {
-        if(!idImg) return alert("ID কার্ড টেমপ্লেট দিন");
+        if(!idImg) return alert("id.png আপলোড করুন");
         const zip = new JSZip();
         for(let d of entries) {
             const txt = `মালিক: ${d.owner}\nপিতা: ${d.parent}\nহোল্ডিং: ${d.hld}\nওয়ার্ড: ${d.ward}\nঠিকানা: ${d.road}`;
-            const qrRes = await fetch(`https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(txt)}`);
-            const b = await qrRes.blob();
-            const qrB64 = await new Promise(ok => { const r = new FileReader(); r.onloadend = () => ok(r.result); r.readAsDataURL(b); });
+            const qrR = await fetch(`https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(txt)}`);
+            const qB64 = await new Promise(ok => { const r = new FileReader(); r.onloadend = () => ok(r.result); r.readAsDataURL(qrR.blob()); });
             const svg = `<?xml version="1.0" encoding="UTF-8"?><svg width="85.5mm" height="54mm" viewBox="0 0 85.5 54" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
                 <image xlink:href="${idImg}" x="0" y="0" width="85.5" height="54" preserveAspectRatio="none"/>
                 ${getSvgText(d.owner, 25.5, 20.5, 36, 3.2, true)}
@@ -275,19 +238,18 @@
                 ${getSvgText(d.hld, 25.5, 30.5, 36, 3.2, true, "white")}
                 ${getSvgText(d.ward, 25.5, 35.5, 36, 3.2)}
                 ${getSvgText(d.road, 25.5, 40.5, 36, 2.8)}
-                <image xlink:href="${qrB64}" x="63.5" y="28" height="19" width="19"/>
+                <image xlink:href="${qB64}" x="63.5" y="28" height="19" width="19"/>
             </svg>`;
             zip.file(`${d.hld.replace(/\//g,'_')}.svg`, svg);
         }
-        zip.generateAsync({type:"blob"}).then(c => { const a = document.createElement('a'); a.href = URL.createObjectURL(c); a.download = "2B_IDs.zip"; a.click(); });
+        zip.generateAsync({type:"blob"}).then(c => { const a = document.createElement('a'); a.href = URL.createObjectURL(c); a.download = "IDs_2B.zip"; a.click(); });
     }
 
     function renderPrint() {
         if(!plateImg) return;
         document.getElementById('print-zone').innerHTML = entries.map(e => {
             const txt = `মালিক: ${e.owner}\nপিতা: ${e.parent}\nহোল্ডিং: ${e.hld}\nওয়ার্ড: ${e.ward}\nঠিকানা: ${e.road}`;
-            return `<div class="page">
-                <img src="${plateImg}" class="bg-template">
+            return `<div class="page"><img src="${plateImg}" class="bg-template">
                 <div class="plate-info p-owner"><span class="auto-fit">${e.owner}</span></div>
                 <div class="plate-info p-parent"><span class="auto-fit">${e.parent}</span></div>
                 <div class="plate-info p-hld"><span class="auto-fit">${e.hld}</span></div>
@@ -296,15 +258,8 @@
                 <img src="https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(txt)}" class="p-qr">
             </div>`;
         }).join('');
-        setTimeout(() => {
-            document.querySelectorAll('.plate-info').forEach(box => {
-                const span = box.querySelector('.auto-fit');
-                const scale = Math.min(1, box.offsetWidth / span.offsetWidth);
-                span.style.transform = `scale(${scale}, 1)`;
-            });
-        }, 500);
+        setTimeout(() => { document.querySelectorAll('.plate-info').forEach(b => { const s = b.querySelector('.auto-fit'); const sc = Math.min(1, b.offsetWidth / s.offsetWidth); s.style.transform = `scale(${sc}, 1)`; }); }, 500);
     }
-
     function logout() { sessionStorage.removeItem('user_2b'); location.reload(); }
 </script>
 </body>
