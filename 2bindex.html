@@ -2,7 +2,7 @@
 <html lang="bn">
 <head>
     <meta charset="UTF-8">
-    <title>2B Communication | Illustrator Fix</title>
+    <title>2B Communication | All Features Restored</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
@@ -17,8 +17,14 @@
             #print-zone { display: block !important; background: white !important; }
             .page { page-break-after: always; position: relative; width: 10in; height: 7in; margin: 0; overflow: hidden; background: white !important; }
             .bg-template { position: absolute; top: 0; left: 0; width: 10in; height: 7in; z-index: 1; }
-            .plate-info { position: absolute; z-index: 10; left: 315px; width: 360px; text-align: left; font-size: 27pt; color: black; font-weight: bold; white-space: nowrap; }
-            .p-owner { top: 235px; } .p-parent { top: 285px; } .p-hld { top: 335px; } .p-ward { top: 385px; } .p-road { top: 435px; }
+            .plate-info { 
+                position: absolute; z-index: 10; left: 315px; width: 360px; 
+                text-align: left; font-size: 27pt; color: black; font-weight: bold; 
+                white-space: nowrap; display: flex; align-items: center;
+            }
+            .auto-fit { display: inline-block; transform-origin: left center; }
+            .p-owner { top: 235px; } .p-parent { top: 285px; } .p-hld { top: 335px; }
+            .p-ward { top: 385px; } .p-road { top: 435px; }
             .p-qr { position: absolute; z-index: 20; left: 678px; top: 220px; width: 185px; }
         }
         #print-zone { display: none; }
@@ -28,31 +34,42 @@
 
 <div id="main-content" class="hidden no-print max-w-5xl mx-auto p-4">
     <div class="flex justify-between items-center mb-6 border-b border-slate-800 pb-4">
-        <h1 class="text-xl font-bold text-indigo-400">2B Communication</h1>
+        <div>
+            <h1 class="text-xl font-bold text-indigo-400">2B Communication</h1>
+            <p id="user-display" class="text-[10px] text-slate-400 uppercase mt-1"></p>
+        </div>
         <div class="flex gap-4 items-center">
-            <span id="user-display" class="text-[10px] bg-slate-800 px-3 py-1 rounded"></span>
-            <button onclick="logout()" class="text-red-400 text-xs font-bold">লগআউট</button>
+            <div class="bg-indigo-600/20 px-3 py-1 rounded border border-indigo-500/30">
+                <span class="text-[10px] text-indigo-300">মোট এন্ট্রি: </span>
+                <span id="total-count" class="font-bold text-indigo-400">0</span>
+            </div>
+            <button onclick="logout()" class="text-red-400 text-xs font-bold bg-red-900/20 px-3 py-1 rounded">লগআউট</button>
         </div>
     </div>
 
     <div id="admin-panel" class="hidden space-y-4 mb-6">
         <div class="ui-card p-4 border-l-4 border-indigo-500">
-            <h2 class="text-sm font-bold text-indigo-300 uppercase mb-4">অ্যাডমিন কন্ট্রোল</h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                <div class="bg-slate-800 p-2 rounded text-center">
-                    <p class="text-[10px] text-indigo-400">ID Template (id.png)</p>
-                    <input type="file" id="idFile" class="text-xs w-full">
+            <h2 class="text-sm font-bold text-indigo-300 mb-4">অ্যাডমিন প্যানেল (User Control & Templates)</h2>
+            
+            <div id="user-stats" class="grid grid-cols-1 md:grid-cols-2 gap-2 mb-4"></div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 border-y border-slate-700 py-4 mb-4">
+                <div class="bg-slate-800 p-2 rounded">
+                    <p class="text-[10px] text-indigo-400 mb-2">ID Template (id.png)</p>
+                    <input type="file" onchange="loadImg(this, 'id')" class="text-xs w-full">
                 </div>
-                <div class="bg-slate-800 p-2 rounded text-center">
-                    <p class="text-[10px] text-indigo-400">Plate Template (plate.png)</p>
-                    <input type="file" id="plateFile" onchange="loadPlate(this)" class="text-xs w-full">
+                <div class="bg-slate-800 p-2 rounded">
+                    <p class="text-[10px] text-indigo-400 mb-2">Plate Template (plate.png)</p>
+                    <input type="file" onchange="loadImg(this, 'plate')" class="text-xs w-full">
                 </div>
             </div>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-2 mb-4">
                 <input type="text" id="new-user" placeholder="User ID">
                 <input type="text" id="new-pass" placeholder="Password">
-                <button onclick="createUser()" class="bg-indigo-600 rounded-lg text-xs font-bold py-2">Create User</button>
+                <button onclick="createUser()" class="bg-indigo-600 rounded-lg text-xs font-bold py-2">ইউজার আপডেট</button>
             </div>
+            <button onclick="deleteAllData()" class="w-full bg-red-900/30 text-red-500 border border-red-800 py-1 text-[10px] rounded">সব ডাটা মুছুন</button>
         </div>
     </div>
 
@@ -65,15 +82,22 @@
             <input type="text" id="ward" placeholder="ওয়ার্ড নং">
             <textarea id="road" placeholder="ঠিকানা" class="md:col-span-2 h-16"></textarea>
         </div>
-        <button id="save-btn" onclick="saveData()" class="w-full bg-indigo-600 mt-4 py-3 rounded-lg font-bold">ডাটা সেভ করুন</button>
+        <div class="flex gap-2 mt-4">
+            <button id="save-btn" onclick="saveData()" class="flex-1 bg-indigo-600 py-3 rounded-lg font-bold">ডাটা সেভ করুন</button>
+            <button id="cancel-btn" onclick="resetForm()" class="hidden bg-slate-700 px-6 rounded-lg font-bold">বাতিল</button>
+        </div>
     </div>
 
     <div id="admin-btns" class="hidden grid grid-cols-2 gap-4 mb-6">
-        <button onclick="buildZip()" class="bg-slate-700 py-3 rounded-lg font-bold border border-slate-600">📂 SVG জিপ ডাউনলোড</button>
-        <button onclick="window.print()" class="bg-blue-600 py-3 rounded-lg font-bold">🖨️ প্রিন্ট ভিউ</button>
+        <button onclick="buildZip()" class="bg-slate-700 py-4 rounded-xl font-bold border border-slate-600">📂 SVG জিপ ডাউনলোড</button>
+        <button onclick="window.print()" class="bg-blue-600 py-4 rounded-xl font-bold shadow-lg">🖨️ প্রিন্ট ভিউ (10x7)</button>
     </div>
 
-    <div id="list" class="space-y-1"></div>
+    <div class="flex justify-between items-center mb-2 px-1 text-xs text-slate-400">
+        <span>এন্ট্রিকৃত তালিকা:</span>
+        <span id="personal-count" class="text-indigo-400 font-bold"></span>
+    </div>
+    <div id="list" class="space-y-1 max-h-[400px] overflow-y-auto pr-2"></div>
 </div>
 
 <div id="print-zone"></div>
@@ -82,34 +106,36 @@
     const firebaseConfig = { databaseURL: "https://b-system-73a7f-default-rtdb.firebaseio.com/" };
     firebase.initializeApp(firebaseConfig);
     const database = firebase.database();
-    let entries = [], currentUser = sessionStorage.getItem('user_2b'), plateImg = "";
+    let entries = [], usersData = {}, currentUser = sessionStorage.getItem('user_2b'), idImg = "", plateImg = "";
 
-    function loadPlate(input) {
+    function loadImg(input, type) {
         if (input.files && input.files[0]) {
-            const r = new FileReader();
-            r.onload = (e) => { plateImg = e.target.result; renderPrint(); };
-            r.readAsDataURL(input.files[0]);
+            const rd = new FileReader();
+            rd.onload = (e) => { 
+                if(type === 'id') idImg = e.target.result; 
+                else { plateImg = e.target.result; renderPrint(); }
+                alert("টেমপ্লেট আপডেট হয়েছে!");
+            };
+            rd.readAsDataURL(input.files[0]);
         }
     }
 
     function initApp() {
         database.ref('users').on('value', (s) => {
-            const users = s.val() || { "admin": { pass: "forhad786" } };
-            if (currentUser && users[currentUser]) {
+            usersData = s.val() || { "admin": { pass: "forhad786" } };
+            if (currentUser && usersData[currentUser]) {
                 document.getElementById('main-content').classList.remove('hidden');
-                document.getElementById('user-display').innerText = currentUser.toUpperCase();
+                document.getElementById('user-display').innerText = `লগইন ইউজার: ${currentUser}`;
                 if(currentUser === 'admin') {
                     document.getElementById('admin-panel').classList.remove('hidden');
                     document.getElementById('admin-btns').classList.remove('hidden');
                 }
                 syncData();
             } else {
-                const id = prompt("ID:").toLowerCase().trim();
-                const p = prompt("Pass:");
-                if(id && users[id] && users[id].pass === p) {
-                    sessionStorage.setItem('user_2b', id);
-                    location.reload();
-                } else { alert("ভুল তথ্য!"); location.reload(); }
+                const id = prompt("ID:"); const p = prompt("Pass:");
+                if(id && usersData[id] && usersData[id].pass === p) {
+                    sessionStorage.setItem('user_2b', id); location.reload();
+                } else { alert("ভুল পাসওয়ার্ড!"); location.reload(); }
             }
         });
     }
@@ -118,43 +144,78 @@
         database.ref('entries').on('value', (s) => {
             const val = s.val();
             entries = val ? Object.keys(val).map(id => ({...val[id], id})) : [];
-            renderList();
+            renderStats(); renderList(); renderPrint();
         });
+    }
+
+    function renderStats() {
+        document.getElementById('total-count').innerText = entries.length;
+        if(currentUser === 'admin') {
+            const counts = {}; entries.forEach(e => counts[e.user] = (counts[e.user] || 0) + 1);
+            let html = "";
+            Object.keys(usersData).forEach(u => {
+                html += `<div class="bg-slate-800 p-2 rounded flex justify-between items-center border border-slate-700">
+                    <span class="text-[10px] font-bold uppercase text-indigo-300">${u} (${counts[u]||0})</span>
+                    <button onclick="delUser('${u}')" class="text-red-500 text-xs font-bold">×</button>
+                </div>`;
+            });
+            document.getElementById('user-stats').innerHTML = html;
+        }
+        document.getElementById('personal-count').innerText = `আপনার এন্ট্রি: ${entries.filter(e=>e.user===currentUser).length}`;
     }
 
     function saveData() {
         const d = { owner: document.getElementById('owner').value, parent: document.getElementById('parent').value, hld: document.getElementById('hld').value, ward: document.getElementById('ward').value, road: document.getElementById('road').value, user: currentUser };
-        if(!d.owner) return;
-        database.ref('entries').push(d);
-        ['owner','parent','hld','ward','road'].forEach(k => document.getElementById(k).value = "");
+        if(!d.owner || !d.hld) return alert("তথ্য দিন");
+        const eid = document.getElementById('edit-id').value;
+        if(eid) database.ref('entries/'+eid).update(d); else database.ref('entries').push(d);
+        resetForm();
+    }
+
+    function editData(id) {
+        const d = entries.find(e => e.id === id);
+        ['owner','parent','hld','ward','road'].forEach(k => document.getElementById(k).value = d[k]);
+        document.getElementById('edit-id').value = id;
+        document.getElementById('save-btn').innerText = "আপডেট করুন";
+        document.getElementById('cancel-btn').classList.remove('hidden');
+        window.scrollTo(0,0);
+    }
+
+    function resetForm() {
+        ['owner','parent','hld','ward','road','edit-id'].forEach(k => document.getElementById(k).value = "");
+        document.getElementById('save-btn').innerText = "ডাটা সেভ করুন";
+        document.getElementById('cancel-btn').classList.add('hidden');
     }
 
     function renderList() {
         const list = (currentUser === 'admin') ? entries : entries.filter(e => e.user === currentUser);
         document.getElementById('list').innerHTML = list.slice().reverse().map(e => `
             <div class="ui-card p-3 flex justify-between items-center text-xs mb-1">
-                <div><p class="font-bold text-indigo-300">${e.owner}</p><p>${e.hld}</p></div>
-                <button onclick="database.ref('entries/${e.id}').remove()" class="text-red-500">×</button>
+                <div><p class="font-bold text-indigo-300">${e.owner}</p><p class="text-slate-500">${e.hld}</p></div>
+                <div class="flex gap-4">
+                    <button onclick="editData('${e.id}')" class="text-blue-400">ইডিট</button>
+                    ${currentUser==='admin'?'<button onclick="database.ref(\'entries/\'+ \''+e.id+'\').remove()" class="text-red-500">×</button>':''}
+                </div>
             </div>`).join('');
     }
 
     async function buildZip() {
         const zip = new JSZip();
         for(let d of entries) {
-            // ইলাস্ট্রেটর ফ্রেন্ডলি একদম সহজ SVG কোড
+            // Illustrator-Friendly SVG (Text Only)
             const svg = `<?xml version="1.0" encoding="utf-8"?>
-<svg version="1.1" xmlns="http://www.w3.org/2000/svg" width="242.36" height="153.07" viewBox="0 0 242.36 153.07">
-    <rect width="242.36" height="153.07" fill="none" stroke="#000000"/>
-    <text transform="matrix(1 0 0 1 70 58)" font-family="'Arial-BoldMT'" font-size="9">${d.owner}</text>
-    <text transform="matrix(1 0 0 1 70 72)" font-family="'ArialMT'" font-size="9">${d.parent}</text>
-    <text transform="matrix(1 0 0 1 70 86)" font-family="'Arial-BoldMT'" font-size="9">${d.hld}</text>
-    <text transform="matrix(1 0 0 1 70 100)" font-family="'ArialMT'" font-size="9">${d.ward}</text>
-    <text transform="matrix(1 0 0 1 70 114)" font-family="'ArialMT'" font-size="8">${d.road}</text>
+<svg version="1.1" xmlns="http://www.w3.org/2000/svg" width="242pt" height="153pt" viewBox="0 0 242 153">
+    <rect width="242" height="153" fill="none" stroke="#000000"/>
+    <text transform="matrix(1 0 0 1 70 58)" font-family="Arial" font-weight="bold" font-size="10">${d.owner}</text>
+    <text transform="matrix(1 0 0 1 70 72)" font-family="Arial" font-size="9">${d.parent}</text>
+    <text transform="matrix(1 0 0 1 70 86)" font-family="Arial" font-weight="bold" font-size="9">${d.hld}</text>
+    <text transform="matrix(1 0 0 1 70 100)" font-family="Arial" font-size="9">${d.ward}</text>
+    <text transform="matrix(1 0 0 1 70 114)" font-family="Arial" font-size="8">${d.road}</text>
 </svg>`;
             zip.file(`${d.hld.replace(/\//g,'-')}.svg`, svg);
         }
         zip.generateAsync({type:"blob"}).then(c => {
-            const a = document.createElement('a'); a.href = URL.createObjectURL(c); a.download = "Fixed_SVG.zip"; a.click();
+            const a = document.createElement('a'); a.href = URL.createObjectURL(c); a.download = "2B_SVG_Work.zip"; a.click();
         });
     }
 
@@ -162,16 +223,19 @@
         if(!plateImg) return;
         document.getElementById('print-zone').innerHTML = entries.map(e => `
             <div class="page"><img src="${plateImg}" class="bg-template">
-                <div class="plate-info p-owner">${e.owner}</div>
-                <div class="plate-info p-parent">${e.parent}</div>
-                <div class="plate-info p-hld">${e.hld}</div>
-                <div class="plate-info p-ward">${e.ward}</div>
-                <div class="plate-info p-road">${e.road}</div>
+                <div class="plate-info p-owner"><span class="auto-fit">${e.owner}</span></div>
+                <div class="plate-info p-parent"><span class="auto-fit">${e.parent}</span></div>
+                <div class="plate-info p-hld"><span class="auto-fit">${e.hld}</span></div>
+                <div class="plate-info p-ward"><span class="auto-fit">${e.ward}</span></div>
+                <div class="plate-info p-road"><span class="auto-fit">${e.road}</span></div>
+                <img src="https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(e.owner+'\n'+e.hld)}" class="p-qr">
             </div>`).join('');
     }
 
     function logout() { sessionStorage.removeItem('user_2b'); location.reload(); }
-    function createUser() { const u = document.getElementById('new-user').value.toLowerCase(); const p = document.getElementById('new-pass').value; database.ref('users/'+u).set({pass:p, status:'active'}); }
+    function createUser() { const u = document.getElementById('new-user').value.toLowerCase().trim(); const p = document.getElementById('new-pass').value.trim(); if(u && p) database.ref('users/'+u).update({pass:p, status:'active'}); }
+    function delUser(u) { if(u!=='admin' && confirm("Delete?")) database.ref('users/'+u).remove(); }
+    function deleteAllData() { if(confirm("সব ডাটা মুছবেন?")) database.ref('entries').remove(); }
 </script>
 </body>
 </html>
