@@ -2,10 +2,9 @@
 <html lang="bn">
 <head>
     <meta charset="UTF-8">
-    <title>2B Communication | Perpetual Master V10</title>
+    <title>2B Communication | Master V13 Locked</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <link href="https://fonts.cdnfonts.com/css2?family=SolaimanLipi&display=swap" rel="stylesheet">
@@ -13,201 +12,167 @@
         body { font-family: 'SolaimanLipi', sans-serif; background: #0f172a; color: white; margin: 0; }
         .ui-card { background: #1e293b; border-radius: 15px; border: 1px solid #334155; }
         input, textarea { background: #334155 !important; color: white !important; border: 1px solid #475569 !important; padding: 10px; border-radius: 8px; width: 100%; outline: none; }
-        #qr-buffer { position: absolute; left: -9999px; }
-        .stat-badge { background: #1e293b; padding: 8px 15px; border-radius: 10px; border: 1px solid #475569; font-size: 12px; font-weight: bold; }
-        .upload-box { border: 2px dashed #334155; padding: 15px; border-radius: 10px; text-align: center; cursor: pointer; }
+        @media print {
+            .no-print { display: none !important; }
+            #print-zone { display: block !important; background: white !important; }
+            .page { page-break-after: always; position: relative; width: 10in; height: 7in; margin: 0; overflow: hidden; background: white !important; }
+            .bg-template { position: absolute; top: 0; left: 0; width: 10in; height: 7in; z-index: 1; }
+            .plate-info { 
+                position: absolute; z-index: 10; left: 315px; width: 360px; 
+                text-align: left; font-size: 27pt; color: black; font-weight: bold; 
+                white-space: nowrap; display: flex; align-items: center;
+            }
+            .auto-fit { display: inline-block; transform-origin: left center; }
+            .p-owner { top: 235px; } .p-parent { top: 285px; } .p-hld { top: 335px; }
+            .p-ward { top: 385px; } .p-road { top: 435px; }
+            .p-qr { position: absolute; z-index: 20; left: 678px; top: 220px; width: 185px; }
+        }
+        #print-zone { display: none; }
     </style>
 </head>
 <body onload="initApp()">
 
 <div id="main-content" class="hidden no-print max-w-5xl mx-auto p-4">
     <div class="flex justify-between items-center mb-6 border-b border-slate-800 pb-4">
-        <div>
-            <h1 class="text-xl font-bold text-indigo-400">2B Communication</h1>
-            <p id="role-display" class="text-[10px] text-slate-500 uppercase tracking-widest font-bold"></p>
+        <h1 class="text-xl font-bold text-indigo-400">2B Communication</h1>
+        <div class="flex gap-4 items-center">
+            <span id="user-display" class="text-[10px] bg-slate-800 px-3 py-1 rounded text-slate-400"></span>
+            <button onclick="logout()" class="text-red-400 text-xs font-bold">লগআউট</button>
         </div>
-        <button onclick="logout()" class="text-red-400 text-xs font-bold bg-red-900/20 px-3 py-1 rounded border border-red-900/30">লগআউট</button>
     </div>
 
-    <div id="admin-panel" class="hidden space-y-6 mb-6">
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div class="ui-card p-4 text-center border-b-4 border-indigo-500">
-                <p class="text-[10px] text-slate-400 uppercase">মোট এন্ট্রি</p>
-                <h2 id="total-count" class="text-2xl font-bold text-indigo-400">0</h2>
-                <button id="clean-btn" onclick="cleanAllEntries()" class="hidden mt-2 bg-red-600/20 text-red-500 border border-red-900/50 text-[9px] py-1 px-2 rounded font-bold">🗑️ CLEAN DATA</button>
+    <div id="admin-panel" class="hidden space-y-4 mb-6">
+        <div class="ui-card p-4 border-l-4 border-indigo-500">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-sm font-bold text-indigo-300 uppercase">ইউজার ও ডাটা কন্ট্রোল</h2>
+                <div class="bg-indigo-600 px-3 py-1 rounded text-[10px] font-bold">মোট ডাটা: <span id="total-count">0</span></div>
             </div>
-            <div id="user-stats-bar" class="md:col-span-3 ui-card p-4 flex gap-4 overflow-x-auto items-center"></div>
-        </div>
+            
+            <div id="user-stats" class="grid grid-cols-1 md:grid-cols-2 gap-2 mb-4"></div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-2 mb-4">
+                <input type="text" id="new-user" placeholder="ইউজার আইডি">
+                <input type="text" id="new-pass" placeholder="পাসওয়ার্ড">
+                <button onclick="createUser()" class="bg-indigo-600 rounded-lg text-xs font-bold py-2">ইউজার সেট/আপডেট</button>
+            </div>
 
-        <div id="template-mgmt-box" class="hidden ui-card p-6 border border-indigo-500/30">
-            <h3 class="text-xs font-bold text-indigo-300 mb-4 uppercase">ডিজাইন টেমপ্লেট আপলোড (SVG)</h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div class="upload-box" onclick="document.getElementById('id-upload').click()">
-                    <p class="text-xs">📤 ID টেমপ্লেট</p>
-                    <input type="file" id="id-upload" class="hidden" accept=".svg" onchange="handleTemplate(this, 'ID')">
-                    <span id="id-status" class="text-[10px] text-emerald-400 mt-1 block">Default</span>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-slate-700 pt-4 mb-4">
+                <div class="bg-slate-800/50 p-2 rounded border border-dashed border-slate-600 text-center">
+                    <p class="text-[9px] mb-1 text-slate-400 font-bold italic">ID Card (id.png)</p>
+                    <input type="file" onchange="loadImg(this, 'id')" class="text-[10px] w-full">
                 </div>
-                <div class="upload-box" onclick="document.getElementById('plate-upload').click()">
-                    <p class="text-xs">📤 Plate টেমপ্লেট</p>
-                    <input type="file" id="plate-upload" class="hidden" accept=".svg" onchange="handleTemplate(this, 'Plate')">
-                    <span id="plate-status" class="text-[10px] text-emerald-400 mt-1 block">Default</span>
+                <div class="bg-slate-800/50 p-2 rounded border border-dashed border-slate-600 text-center">
+                    <p class="text-[9px] mb-1 text-slate-400 font-bold italic">Plate (plate.png)</p>
+                    <input type="file" onchange="loadImg(this, 'plate')" class="text-[10px] w-full">
                 </div>
             </div>
+
+            <button onclick="deleteAllData()" class="w-full bg-red-900/30 text-red-400 border border-red-800 py-1 text-[10px] font-bold rounded">সব এন্ট্রিকৃত ডাটা মুছুন (ইউজার আইডি মুছবে না)</button>
         </div>
     </div>
 
-    <div id="user-live-stats" class="hidden grid grid-cols-2 gap-3 mb-4">
-        <div class="stat-badge text-indigo-300">আমার এন্ট্রি: <span id="my-count" class="text-white">0</span></div>
-        <div class="stat-badge text-emerald-400">মোট এন্ট্রি: <span id="overall-count" class="text-white">0</span></div>
-    </div>
-
-    <div id="entry-form-box" class="ui-card p-6 mb-6">
+    <div class="ui-card p-6 mb-6">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
             <input type="hidden" id="edit-id">
             <input type="text" id="owner" placeholder="মালিকের নাম">
             <input type="text" id="parent" placeholder="পিতা/স্বামীর নাম">
             <input type="text" id="hld" placeholder="হোল্ডিং নং">
-            <input type="text" id="ward" placeholder="ওয়ার্ড নং">
-            <textarea id="road" placeholder="গ্রাম/মহল্লা" class="md:col-span-2 h-16"></textarea>
+            <input type="text" id="ward" placeholder="ওয়ার্ড নং">
+            <textarea id="road" placeholder="ঠিকানা" class="md:col-span-2 h-16"></textarea>
         </div>
-        <button id="save-btn" onclick="saveData()" class="w-full bg-indigo-600 py-3 rounded-lg font-bold mt-4">ডাটা সেভ করুন</button>
+        <div class="flex gap-2 mt-4">
+            <button id="save-btn" onclick="saveData()" class="flex-1 bg-indigo-600 py-3 rounded-lg font-bold">ডাটা সেভ করুন</button>
+            <button id="cancel-btn" onclick="resetForm()" class="hidden bg-slate-700 px-6 rounded-lg font-bold">বাতিল</button>
+        </div>
     </div>
 
-    <div id="admin-btns" class="hidden grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-        <button onclick="downloadZip('ID')" class="bg-emerald-700 py-4 rounded-xl font-bold">🆔 ID SVG Download</button>
-        <button onclick="downloadZip('Plate')" class="bg-slate-700 py-4 rounded-xl font-bold">🍽️ Plate SVG Download</button>
+    <div id="admin-btns" class="hidden grid grid-cols-2 gap-4 mb-6">
+        <button onclick="buildZip()" class="bg-slate-700 py-3 rounded-lg font-bold border border-slate-600">📂 SVG জিপ ডাউনলোড</button>
+        <button onclick="window.print()" class="bg-blue-600 py-3 rounded-lg font-bold shadow-lg">🖨️ প্রিন্ট ভিউ (10x7)</button>
     </div>
 
-    <div id="list" class="space-y-1"></div>
+    <div id="list" class="space-y-1 max-h-[400px] overflow-y-auto pr-2"></div>
 </div>
-<div id="qr-buffer"></div>
+
+<div id="print-zone"></div>
 
 <script>
+    // Firebase Setup
     const firebaseConfig = { databaseURL: "https://b-system-73a7f-default-rtdb.firebaseio.com/" };
     firebase.initializeApp(firebaseConfig);
     const database = firebase.database();
-    let entries = [], users = {}, currentUser = sessionStorage.getItem('user_2b');
-    let customTemplates = { ID: localStorage.getItem('tpl_id_v10'), Plate: localStorage.getItem('tpl_plate_v10') };
+
+    let entries = []; 
+    let usersData = {}; 
+    let currentUser = sessionStorage.getItem('user_2b');
+    let idImg = ""; 
+    let plateImg = "";
+
+    function loadImg(input, type) {
+        if (input.files && input.files[0]) {
+            const rd = new FileReader();
+            rd.onload = (e) => { 
+                if(type === 'id') idImg = e.target.result; 
+                else { plateImg = e.target.result; renderPrint(); }
+            };
+            rd.readAsDataURL(input.files[0]);
+        }
+    }
 
     function initApp() {
         database.ref('users').on('value', (s) => {
-            users = s.val() || {};
-            if (currentUser && users[currentUser]) {
+            usersData = s.val() || { "admin": { pass: "forhad786" } };
+            if (currentUser && usersData[currentUser]) {
                 document.getElementById('main-content').classList.remove('hidden');
-                document.getElementById('role-display').innerText = `ID: ${currentUser}`;
+                document.getElementById('user-display').innerText = `ইউজার: ${currentUser.toUpperCase()}`;
                 if(currentUser === 'admin') {
-                    ['admin-panel','template-mgmt-box','admin-btns','clean-btn'].forEach(id => document.getElementById(id).classList.remove('hidden'));
-                } else if(currentUser === 'viewer') {
                     document.getElementById('admin-panel').classList.remove('hidden');
-                    document.getElementById('entry-form-box').classList.add('hidden');
-                } else {
-                    document.getElementById('user-live-stats').classList.remove('hidden');
+                    document.getElementById('admin-btns').classList.remove('hidden');
                 }
                 syncData();
             } else {
-                const id = prompt("ID:"); const p = prompt("Password:");
-                if(id && users[id] && users[id].pass === p) { sessionStorage.setItem('user_2b', id); location.reload(); }
+                const id = prompt("ID:").toLowerCase().trim(); 
+                const p = prompt("Pass:");
+                if(id && usersData[id] && usersData[id].pass === p) {
+                    sessionStorage.setItem('user_2b', id); location.reload();
+                } else { alert("ভুল তথ্য!"); location.reload(); }
             }
         });
-        if(customTemplates.ID) document.getElementById('id-status').innerText = "✅ Custom ID Loaded";
-        if(customTemplates.Plate) document.getElementById('plate-status').innerText = "✅ Custom Plate Loaded";
-    }
-
-    function handleTemplate(input, type) {
-        const file = input.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                customTemplates[type] = e.target.result;
-                localStorage.setItem('tpl_'+type.toLowerCase()+'_v10', e.target.result);
-                document.getElementById(type.toLowerCase()+'-status').innerText = "✅ Saved";
-                alert(type + " টেমপ্লেট সেভ হয়েছে!");
-            };
-            reader.readAsText(file);
-        }
     }
 
     function syncData() {
         database.ref('entries').on('value', (s) => {
             const val = s.val();
             entries = val ? Object.keys(val).map(id => ({...val[id], id})) : [];
-            updateUI();
+            renderStats(); renderList(); renderPrint();
         });
     }
 
-    function updateUI() {
-        const total = entries.length;
-        const myCount = entries.filter(e => e.user === currentUser).length;
-        if(document.getElementById('total-count')) document.getElementById('total-count').innerText = total;
-        if(document.getElementById('my-count')) document.getElementById('my-count').innerText = myCount;
-        if(document.getElementById('overall-count')) document.getElementById('overall-count').innerText = total;
-
+    function renderStats() {
         const counts = {}; entries.forEach(e => counts[e.user] = (counts[e.user] || 0) + 1);
-        let statHtml = "";
-        Object.keys(users).forEach(u => {
-            statHtml += `<div class="bg-slate-800 px-3 py-1 rounded border border-slate-700 text-center min-w-[80px]">
-                <p class="text-[9px] text-indigo-300 font-bold uppercase">${u}</p>
-                <p class="text-lg font-bold">${counts[u] || 0}</p></div>`;
-        });
-        document.getElementById('user-stats-bar').innerHTML = statHtml;
-        renderEntries();
-    }
-
-    function renderEntries() {
-        let list = (currentUser === 'admin' || currentUser === 'viewer') ? entries : entries.filter(e => e.user === currentUser);
-        document.getElementById('list').innerHTML = list.slice().reverse().map(e => `
-            <div class="ui-card p-3 flex justify-between items-center text-xs mb-1">
-                <div><p class="font-bold text-indigo-300">${e.owner}</p><p class="text-slate-500">${e.hld}</p></div>
-                <button onclick="editData('${e.id}')" class="text-blue-400">Edit</button>
-            </div>`).join('');
-    }
-
-    // --- ডাউনলোড ফাংশন (চূড়ান্ত সমাধান) ---
-    async function downloadZip(mode) {
-        if(!customTemplates[mode]) return alert("টেমপ্লেট আপলোড করুন!");
-        const zip = new JSZip();
-        const buf = document.getElementById('qr-buffer');
-        const btn = event.target;
-        btn.innerText = "Processing..."; 
-        
-        for(let d of entries) {
-            buf.innerHTML = '';
-            const qrUrl = await new Promise(res => {
-                new QRCode(buf, { text: `ID: ${d.hld}\nName: ${d.owner}`, width: 300, height: 300 });
-                setTimeout(() => { 
-                    const canvas = buf.querySelector('canvas'); 
-                    res(canvas ? canvas.toDataURL("image/png") : ""); 
-                }, 400);
+        if(currentUser === 'admin') {
+            document.getElementById('total-count').innerText = entries.length;
+            let html = "";
+            Object.keys(usersData).forEach(u => {
+                const isB = usersData[u].status === 'blocked';
+                html += `<div class="bg-slate-800 p-2 rounded flex justify-between items-center border ${isB?'border-red-900':'border-slate-700'}">
+                    <span class="text-[10px] font-bold uppercase ${isB?'text-red-500':'text-indigo-300'}">${u} (${counts[u]||0})</span>
+                    <div class="flex gap-2">
+                        <button onclick="updateStatus('${u}', '${isB?'active':'blocked'}')" class="text-[9px] px-2 py-1 bg-slate-700 rounded">${isB?'আনব্লক':'ব্লক'}</button>
+                        <button onclick="delUser('${u}')" class="text-[9px] text-red-500 font-bold px-1">×</button>
+                    </div>
+                </div>`;
             });
-            let finalSvg = customTemplates[mode]
-                .replace(/{{OWNER}}/gi, d.owner).replace(/{{PARENT}}/gi, d.parent)
-                .replace(/{{HLD}}/gi, d.hld).replace(/{{WARD}}/gi, d.ward)
-                .replace(/{{ROAD}}/gi, d.road).replace(/{{QR}}/gi, qrUrl);
-            zip.file(`${mode}_${d.hld.replace(/[/\\?%*:|"<>]/g, '-')}.svg`, finalSvg);
+            document.getElementById('user-stats').innerHTML = html;
         }
-        zip.generateAsync({type:"blob", compression: "DEFLATE"}).then(c => {
-            const a = document.createElement('a'); a.href = URL.createObjectURL(c);
-            a.download = `2B_Final_${mode}.zip`; a.click();
-            btn.innerText = (mode === 'ID' ? "🆔 ID SVG Download" : "🍽️ Plate SVG Download");
-        });
     }
 
-    function saveData() {
-        const d = { owner: document.getElementById('owner').value, parent: document.getElementById('parent').value, hld: document.getElementById('hld').value, ward: document.getElementById('ward').value, road: document.getElementById('road').value, user: currentUser };
-        if(!d.owner) return;
-        const eid = document.getElementById('edit-id').value;
-        if(eid) database.ref('entries/'+eid).update(d); else database.ref('entries').push(d);
-        ['owner','parent','hld','ward','road','edit-id'].forEach(k => document.getElementById(k).value = "");
+    function createUser() {
+        const u = document.getElementById('new-user').value.toLowerCase().trim();
+        const p = document.getElementById('new-pass').value.trim();
+        if(u && p) { database.ref('users/'+u).update({pass:p, status:'active'}); alert("ইউজার আপডেট হয়েছে!"); }
     }
 
-    function editData(id) {
-        const d = entries.find(e => e.id === id);
-        ['owner','parent','hld','ward','road'].forEach(k => document.getElementById(k).value = d[k]);
-        document.getElementById('edit-id').value = id;
-        window.scrollTo(0,0);
-    }
-    function cleanAllEntries() { if(confirm("সব ডাটা মুছবেন?")) database.ref('entries').remove(); }
-    function logout() { sessionStorage.clear(); location.reload(); }
-</script>
-</body>
-</html>
+    function updateStatus(u, s) { if(u!=='admin') database.ref('users/'+u).update({status:s}); }
+    
+    function delUser(u
