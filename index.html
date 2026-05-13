@@ -2,7 +2,7 @@
 <html lang="bn">
 <head>
     <meta charset="UTF-8">
-    <title>2B Communication | Final Fix</title>
+    <title>2B Communication | Illustrator Fix</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
@@ -30,7 +30,7 @@
     <div class="flex justify-between items-center mb-6 border-b border-slate-800 pb-4">
         <h1 class="text-xl font-bold text-indigo-400">2B Communication</h1>
         <div class="flex gap-4 items-center">
-            <span id="user-display" class="text-[10px] bg-slate-800 px-3 py-1 rounded text-slate-400"></span>
+            <span id="user-display" class="text-[10px] bg-slate-800 px-3 py-1 rounded"></span>
             <button onclick="logout()" class="text-red-400 text-xs font-bold">লগআউট</button>
         </div>
     </div>
@@ -38,23 +38,21 @@
     <div id="admin-panel" class="hidden space-y-4 mb-6">
         <div class="ui-card p-4 border-l-4 border-indigo-500">
             <h2 class="text-sm font-bold text-indigo-300 uppercase mb-4">অ্যাডমিন কন্ট্রোল</h2>
-            <div id="user-stats" class="grid grid-cols-1 md:grid-cols-2 gap-2 mb-4"></div>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 border-y border-slate-700 py-4 mb-4 text-center">
-                <div class="bg-slate-800 p-2 rounded">
-                    <p class="text-[10px] text-indigo-400 mb-2">ID Template (id.png)</p>
-                    <input type="file" onchange="loadImg(this, 'id')" class="text-xs w-full">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div class="bg-slate-800 p-2 rounded text-center">
+                    <p class="text-[10px] text-indigo-400">ID Template (id.png)</p>
+                    <input type="file" id="idFile" class="text-xs w-full">
                 </div>
-                <div class="bg-slate-800 p-2 rounded">
-                    <p class="text-[10px] text-indigo-400 mb-2">Plate Template (plate.png)</p>
-                    <input type="file" onchange="loadImg(this, 'plate')" class="text-xs w-full">
+                <div class="bg-slate-800 p-2 rounded text-center">
+                    <p class="text-[10px] text-indigo-400">Plate Template (plate.png)</p>
+                    <input type="file" id="plateFile" onchange="loadPlate(this)" class="text-xs w-full">
                 </div>
             </div>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-2 mb-4">
-                <input type="text" id="new-user" placeholder="ইউজার আইডি">
-                <input type="text" id="new-pass" placeholder="পাসওয়ার্ড">
-                <button onclick="createUser()" class="bg-indigo-600 rounded-lg text-xs font-bold py-2">ইউজার সেট</button>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
+                <input type="text" id="new-user" placeholder="User ID">
+                <input type="text" id="new-pass" placeholder="Password">
+                <button onclick="createUser()" class="bg-indigo-600 rounded-lg text-xs font-bold py-2">Create User</button>
             </div>
-            <button onclick="deleteAllData()" class="w-full bg-red-900/30 text-red-400 border border-red-800 py-1 text-[10px] font-bold rounded">সব ডাটা মুছুন</button>
         </div>
     </div>
 
@@ -72,7 +70,7 @@
 
     <div id="admin-btns" class="hidden grid grid-cols-2 gap-4 mb-6">
         <button onclick="buildZip()" class="bg-slate-700 py-3 rounded-lg font-bold border border-slate-600">📂 SVG জিপ ডাউনলোড</button>
-        <button onclick="window.print()" class="bg-blue-600 py-3 rounded-lg font-bold">🖨️ প্রিন্ট ভিউ (10x7)</button>
+        <button onclick="window.print()" class="bg-blue-600 py-3 rounded-lg font-bold">🖨️ প্রিন্ট ভিউ</button>
     </div>
 
     <div id="list" class="space-y-1"></div>
@@ -84,32 +82,34 @@
     const firebaseConfig = { databaseURL: "https://b-system-73a7f-default-rtdb.firebaseio.com/" };
     firebase.initializeApp(firebaseConfig);
     const database = firebase.database();
-    let entries = [], usersData = {}, currentUser = sessionStorage.getItem('user_2b'), idImg = "", plateImg = "";
+    let entries = [], currentUser = sessionStorage.getItem('user_2b'), plateImg = "";
 
-    function loadImg(input, type) {
+    function loadPlate(input) {
         if (input.files && input.files[0]) {
-            const rd = new FileReader();
-            rd.onload = (e) => { if(type === 'id') idImg = e.target.result; else plateImg = e.target.result; alert("ডান!"); };
-            rd.readAsDataURL(input.files[0]);
+            const r = new FileReader();
+            r.onload = (e) => { plateImg = e.target.result; renderPrint(); };
+            r.readAsDataURL(input.files[0]);
         }
     }
 
     function initApp() {
         database.ref('users').on('value', (s) => {
-            usersData = s.val() || { "admin": { pass: "forhad786" } };
-            if (currentUser && usersData[currentUser]) {
+            const users = s.val() || { "admin": { pass: "forhad786" } };
+            if (currentUser && users[currentUser]) {
                 document.getElementById('main-content').classList.remove('hidden');
-                document.getElementById('user-display').innerText = `ইউজার: ${currentUser.toUpperCase()}`;
+                document.getElementById('user-display').innerText = currentUser.toUpperCase();
                 if(currentUser === 'admin') {
                     document.getElementById('admin-panel').classList.remove('hidden');
                     document.getElementById('admin-btns').classList.remove('hidden');
                 }
                 syncData();
             } else {
-                const id = prompt("ID:"); const p = prompt("Pass:");
-                if(id && usersData[id] && usersData[id].pass === p) {
-                    sessionStorage.setItem('user_2b', id); location.reload();
-                } else { alert("ভুল!"); location.reload(); }
+                const id = prompt("ID:").toLowerCase().trim();
+                const p = prompt("Pass:");
+                if(id && users[id] && users[id].pass === p) {
+                    sessionStorage.setItem('user_2b', id);
+                    location.reload();
+                } else { alert("ভুল তথ্য!"); location.reload(); }
             }
         });
     }
@@ -118,20 +118,14 @@
         database.ref('entries').on('value', (s) => {
             const val = s.val();
             entries = val ? Object.keys(val).map(id => ({...val[id], id})) : [];
-            renderStats(); renderList();
+            renderList();
         });
     }
 
-    function renderStats() {
-        if(currentUser !== 'admin') return;
-        let html = ""; entries.forEach(e => {}); // Stats logic
-        document.getElementById('user-stats').innerHTML = "অ্যাডমিন মোড সক্রিয়";
-    }
-
     function saveData() {
-        const data = { owner: document.getElementById('owner').value, parent: document.getElementById('parent').value, hld: document.getElementById('hld').value, ward: document.getElementById('ward').value, road: document.getElementById('road').value, user: currentUser };
-        if(!data.owner) return;
-        database.ref('entries').push(data);
+        const d = { owner: document.getElementById('owner').value, parent: document.getElementById('parent').value, hld: document.getElementById('hld').value, ward: document.getElementById('ward').value, road: document.getElementById('road').value, user: currentUser };
+        if(!d.owner) return;
+        database.ref('entries').push(d);
         ['owner','parent','hld','ward','road'].forEach(k => document.getElementById(k).value = "");
     }
 
@@ -145,29 +139,38 @@
     }
 
     async function buildZip() {
-        if(!idImg) return alert("id.png দিন");
         const zip = new JSZip();
         for(let d of entries) {
-            const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(d.owner+' '+d.hld)}`;
-            // ক্লিন SVG কোড যা ইলাস্ট্রেটরে ওপেন হবে
-            const svg = `<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="242.36" height="153.07" viewBox="0 0 85.5 54">
-                <image width="85.5" height="54" xlink:href="${idImg}"/>
-                <text transform="matrix(1 0 0 1 25.5 20.5)" font-family="Arial-BoldMT" font-size="3.2">${d.owner}</text>
-                <text transform="matrix(1 0 0 1 25.5 25.5)" font-family="ArialMT" font-size="3.2">${d.parent}</text>
-                <text transform="matrix(1 0 0 1 25.5 30.5)" font-family="Arial-BoldMT" font-size="3.2" fill="#FFFFFF">${d.hld}</text>
-                <text transform="matrix(1 0 0 1 25.5 35.5)" font-family="ArialMT" font-size="3.2">${d.ward}</text>
-                <text transform="matrix(1 0 0 1 25.5 40.5)" font-family="ArialMT" font-size="2.8">${d.road}</text>
-                <image width="19" height="19" x="63.5" y="28" xlink:href="${qrUrl}"/>
-            </svg>`;
+            // ইলাস্ট্রেটর ফ্রেন্ডলি একদম সহজ SVG কোড
+            const svg = `<?xml version="1.0" encoding="utf-8"?>
+<svg version="1.1" xmlns="http://www.w3.org/2000/svg" width="242.36" height="153.07" viewBox="0 0 242.36 153.07">
+    <rect width="242.36" height="153.07" fill="none" stroke="#000000"/>
+    <text transform="matrix(1 0 0 1 70 58)" font-family="'Arial-BoldMT'" font-size="9">${d.owner}</text>
+    <text transform="matrix(1 0 0 1 70 72)" font-family="'ArialMT'" font-size="9">${d.parent}</text>
+    <text transform="matrix(1 0 0 1 70 86)" font-family="'Arial-BoldMT'" font-size="9">${d.hld}</text>
+    <text transform="matrix(1 0 0 1 70 100)" font-family="'ArialMT'" font-size="9">${d.ward}</text>
+    <text transform="matrix(1 0 0 1 70 114)" font-family="'ArialMT'" font-size="8">${d.road}</text>
+</svg>`;
             zip.file(`${d.hld.replace(/\//g,'-')}.svg`, svg);
         }
         zip.generateAsync({type:"blob"}).then(c => {
-            const a = document.createElement('a'); a.href = URL.createObjectURL(c); a.download = "2B_SVG_Fixed.zip"; a.click();
+            const a = document.createElement('a'); a.href = URL.createObjectURL(c); a.download = "Fixed_SVG.zip"; a.click();
         });
     }
 
+    function renderPrint() {
+        if(!plateImg) return;
+        document.getElementById('print-zone').innerHTML = entries.map(e => `
+            <div class="page"><img src="${plateImg}" class="bg-template">
+                <div class="plate-info p-owner">${e.owner}</div>
+                <div class="plate-info p-parent">${e.parent}</div>
+                <div class="plate-info p-hld">${e.hld}</div>
+                <div class="plate-info p-ward">${e.ward}</div>
+                <div class="plate-info p-road">${e.road}</div>
+            </div>`).join('');
+    }
+
     function logout() { sessionStorage.removeItem('user_2b'); location.reload(); }
-    function deleteAllData() { if(confirm("সব মুছবেন?")) database.ref('entries').remove(); }
     function createUser() { const u = document.getElementById('new-user').value.toLowerCase(); const p = document.getElementById('new-pass').value; database.ref('users/'+u).set({pass:p, status:'active'}); }
 </script>
 </body>
